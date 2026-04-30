@@ -21,8 +21,17 @@ if (strlen($text) > 150000) {
 }
 
 try {
-    // Para a Groq, precisamos de um texto menor para evitar o erro 413
-    $shortText = (strlen($text) > 25000) ? (substr($text, 0, 12500) . "\n[...]\n" . substr($text, -12500)) : $text;
+    // Melhoramos a captura de texto: início, meio e fim do documento
+    $length = strlen($text);
+    if ($length > 60000) {
+        $shortText = substr($text, 0, 20000) . 
+                     "\n[... MEIO DO DOCUMENTO ...]\n" . 
+                     substr($text, ($length / 2) - 10000, 20000) . 
+                     "\n[... FIM DO DOCUMENTO ...]\n" . 
+                     substr($text, -20000);
+    } else {
+        $shortText = $text;
+    }
     
     $jsonStructure = '{
       "nome_orgao": "...",
@@ -34,28 +43,37 @@ try {
       "materias": [ { "nome": "...", "sigla": "...", "inicio": 1, "fim": 10, "peso": 1.0 } ]
     }';
 
-    $promptGroq = "Extraia os dados do edital em JSON seguindo RIGOROSAMENTE esta estrutura: $jsonStructure\n\nTEXTO: $shortText\n\nResponda APENAS o JSON.";
-    $promptGemini = "Extraia os dados do edital abaixo. Analise o documento INTEIRO e responda seguindo esta estrutura JSON: $jsonStructure\n\nTEXTO: $text\n\nResponda APENAS o JSON.";
+    $promptGroq = "Extraia os dados do edital em JSON seguindo RIGOROSAMENTE esta estrutura: $jsonStructure\n\nTEXTO: $shortText\n\nResponda APENAS o JSON puro.";
+    $promptGemini = "Extraia os dados do edital abaixo. Analise o documento INTEIRO e responda seguindo esta estrutura JSON: $jsonStructure\n\nTEXTO: $text\n\nResponda APENAS o JSON puro.";
 
-    // 1. Tenta Groq Primeiro (Como solicitado)
+    // 1. Tenta Groq Primeiro
     $jsonResponse = callGroqAI($promptGroq, "Você é um motor de extração JSON. Responda apenas o objeto JSON puro.");
     
-    // 2. Se a Groq falhar ou o resultado for insuficiente, tenta o Gemini (Failover)
+    // 2. Se a Groq falhar (ex: chave ausente ou erro), tenta o Gemini (Failover)
     if (!$jsonResponse || strpos($jsonResponse, 'Erro') !== false || strlen($jsonResponse) < 50) {
         $jsonResponse = callGeminiAI($promptGemini);
     }
     
-    // Limpar markdown
-    $jsonResponse = preg_replace('/^```json|```$/m', '', $jsonResponse);
-    $data = json_decode(trim($jsonResponse), true);
+    // Limpar markdown e extrair apenas o objeto JSON
+    if (preg_match('/({.*})/s', $jsonResponse, $matches)) {
+        $jsonResponse = $matches[1];
+    }
+    $trimmedResponse = trim($jsonResponse);
+    
+    $data = json_decode($trimmedResponse, true);
 
     if ($data && isset($data['nome_orgao'])) {
         echo json_encode(['success' => true, 'data' => $data]);
     } else {
         $errorMsg = 'A IA não conseguiu estruturar os dados do edital.';
-        if (strpos($jsonResponse, 'Erro AI') !== false || strpos($jsonResponse, 'Erro Gemini') !== false) {
+        
+        // Verifica se o erro é por falta de configuração
+        if (strpos($jsonResponse, 'Chave da API') !== false) {
+            $errorMsg = "Configuração Necessária: " . $jsonResponse;
+        } elseif (strpos($jsonResponse, 'Erro AI') !== false || strpos($jsonResponse, 'Erro Gemini') !== false) {
             $errorMsg = $jsonResponse;
         }
+
         echo json_encode([
             'success' => false, 
             'error' => $errorMsg, 

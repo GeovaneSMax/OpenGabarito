@@ -3,6 +3,17 @@
  * UI Helpers for OpenGabarito
  */
 
+function slugify($text) {
+    $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+    $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+    $text = preg_replace('~[^-\w]+~', '', $text);
+    $text = trim($text, '-');
+    $text = preg_replace('~-+~', '-', $text);
+    $text = strtolower($text);
+    if (empty($text)) return 'n-a';
+    return $text;
+}
+
 function getLogoSVG($size = 40) {
     return '
     <svg width="'.$size.'" height="'.$size.'" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -116,9 +127,14 @@ function getFooter() {
                     </p>
                 </div>
                 <div class="h-8 w-[1px] bg-slate-100 hidden md:block"></div>
-                <a href="https://www.asaas.com/c/vq7q638uo8lmwmdt" target="_blank" class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white px-4 py-2 rounded-lg text-[10px] font-black transition-all border border-emerald-200 uppercase tracking-widest shadow-sm">
-                    <i class="fa-solid fa-heart"></i> Apoiar Projeto
-                </a>
+                <div class="flex items-center gap-3">
+                    <a href="https://www.asaas.com/c/vq7q638uo8lmwmdt" target="_blank" class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white px-4 py-2 rounded-lg text-[10px] font-black transition-all border border-emerald-200 uppercase tracking-widest shadow-sm">
+                        <i class="fa-solid fa-heart"></i> Apoiar Projeto
+                    </a>
+                    <a href="https://github.com/GeovaneSMax/OpenGabarito" target="_blank" class="flex items-center gap-2 bg-slate-50 hover:bg-slate-900 text-slate-900 hover:text-white px-4 py-2 rounded-lg text-[10px] font-black transition-all border border-slate-200 uppercase tracking-widest shadow-sm">
+                        <i class="fa-brands fa-github text-sm"></i> Open Source
+                    </a>
+                </div>
             </div>
 
             <p class="text-slate-400 text-[10px]">

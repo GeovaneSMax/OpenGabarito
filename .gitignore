@@ -31,3 +31,4 @@ Thumbs.db
 # Dependencies
 vendor/
 node_modules/
+scratch/

@@ -39,8 +39,10 @@ try {
         $jsonResponse = callGeminiAI($promptGemini);
     }
     
-    // Limpar markdown
-    $jsonResponse = preg_replace('/^```json|```$/m', '', $jsonResponse);
+    // Limpar markdown e extrair apenas o objeto JSON
+    if (preg_match('/({.*})/s', $jsonResponse, $matches)) {
+        $jsonResponse = $matches[1];
+    }
     $data = json_decode(trim($jsonResponse), true);
 
     if ($data && isset($data['versions'])) {

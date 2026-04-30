@@ -9,7 +9,7 @@ function callGeminiAI($prompt, $system_message = "Você é um analista especiali
     if (empty($apiKey)) {
         return "Erro Gemini: Chave da API Gemini não configurada no arquivo .env";
     }
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . $apiKey;
 
     $data = [
         "system_instruction" => [

@@ -7,8 +7,9 @@ require_once __DIR__ . '/../includes/groq_api.php';
 require_once __DIR__ . '/../includes/ui_helper.php';
 
 $cargo_id = $_GET['cargo_id'] ?? null;
+$slug = $_GET['slug'] ?? null;
 
-if (!$cargo_id) {
+if (!$cargo_id && !$slug) {
     header("Location: index.php");
     exit;
 }
@@ -24,17 +25,26 @@ $info = null;
 
 try {
     // 1. Fetch Cargo/Concurso Info
-    $stmt = $pdo->prepare("SELECT cg.*, c.nome_orgao, c.banca, c.status, c.image_url 
-                           FROM cargos cg 
-                           JOIN concursos c ON cg.concurso_id = c.id 
-                           WHERE cg.id = ? AND cg.deleted_at IS NULL AND c.deleted_at IS NULL");
-    $stmt->execute([$cargo_id]);
+    if ($slug) {
+        $stmt = $pdo->prepare("SELECT cg.*, c.nome_orgao, c.banca, c.status, c.image_url 
+                               FROM cargos cg 
+                               JOIN concursos c ON cg.concurso_id = c.id 
+                               WHERE cg.slug = ? AND cg.deleted_at IS NULL AND c.deleted_at IS NULL");
+        $stmt->execute([$slug]);
+    } else {
+        $stmt = $pdo->prepare("SELECT cg.*, c.nome_orgao, c.banca, c.status, c.image_url 
+                               FROM cargos cg 
+                               JOIN concursos c ON cg.concurso_id = c.id 
+                               WHERE cg.id = ? AND cg.deleted_at IS NULL AND c.deleted_at IS NULL");
+        $stmt->execute([$cargo_id]);
+    }
     $info = $stmt->fetch();
 
     if (!$info) {
         header("Location: index.php");
         exit;
     }
+    $cargo_id = $info['id'];
     $concurso_id = $info['concurso_id'];
 
     // Busca Top Moderadores deste concurso (Wiki)

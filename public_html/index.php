@@ -10,8 +10,8 @@ $concursos = [];
 try {
     $totalGabaritos = $pdo->query("SELECT COUNT(*) FROM respostas_usuarios")->fetchColumn();
     $aiAccuracy = $pdo->query("SELECT accuracy FROM site_stats WHERE id = 1")->fetchColumn() ?: 98.2;
-    // Busca os concursos ativos
-    $stmt = $pdo->query("SELECT c.*, cg.id as cargo_id, cg.nome_cargo, cg.total_questoes, cg.pnc_ia, cg.vagas, cg.inscritos,
+    // Busca os concursos (Padrão: Populares)
+    $stmt = $pdo->query("SELECT c.*, cg.id as cargo_id, cg.nome_cargo, cg.slug, cg.total_questoes, cg.pnc_ia, cg.vagas, cg.inscritos,
                         (SELECT COUNT(*) FROM respostas_usuarios ru WHERE ru.cargo_id = cg.id AND ru.deleted_at IS NULL) as total_amostras,
                         (SELECT MAX(nota_estimada) FROM respostas_usuarios ru WHERE ru.cargo_id = cg.id AND ru.deleted_at IS NULL) as nota_maxima
                         FROM concursos c 
@@ -223,8 +223,13 @@ try {
             
             <!-- Lado Esquerdo: Manifesto -->
             <div class="md:col-span-7 text-left">
-                <div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest mb-4 border border-indigo-200">
-                    <i class="fa-solid fa-hand-holding-heart"></i> 100% Gratuito e Colaborativo
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border border-indigo-200">
+                        <i class="fa-solid fa-hand-holding-heart"></i> 100% Gratuito e Colaborativo
+                    </div>
+                    <a href="https://github.com/GeovaneSMax/OpenGabarito" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border border-slate-800 hover:bg-slate-700 transition-all">
+                        <i class="fa-brands fa-github"></i> Open Source
+                    </a>
                 </div>
                 <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">
                     A união faz o <span class="text-indigo-600">Ranking.</span>
@@ -409,21 +414,8 @@ try {
             </div>
         </div>
 
-        <div id="global-stats" class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">
-            <div>
-                <h2 class="text-3xl font-black text-slate-900 mb-3 tracking-tighter">Simulação de Notas</h2>
-                <p class="text-slate-500 font-medium">Algoritmo aberto, dados transparentes. Acompanhe a estimativa da nota de corte em tempo real.</p>
-            </div>
-            <div class="w-full md:w-[400px] relative group">
-                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                    <i class="fa-solid fa-magnifying-glass text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
-                </div>
-                <input type="text" id="search-contest" class="block w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm font-medium" placeholder="Buscar cargo, órgão ou banca...">
-            </div>
-        </div>
-
         <!-- Cards de Estatísticas -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-xl shadow-slate-200/20 flex items-center gap-6">
                 <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
                     <i class="fa-solid fa-database"></i>
@@ -453,6 +445,37 @@ try {
             </div>
         </div>
 
+        <div class="mb-12">
+            <div class="flex flex-col md:flex-row justify-between items-end gap-8 mb-6">
+                <div>
+                    <h2 class="text-4xl font-black text-slate-900 mb-3 tracking-tighter">Explorar Rankings</h2>
+                    <p class="text-slate-500 font-medium">Encontre seu concurso e acompanhe a evolução do corte em tempo real.</p>
+                </div>
+                <div class="w-full md:w-[500px] relative group">
+                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
+                    </div>
+                    <input type="text" id="search-contest" class="block w-full pl-14 pr-6 py-5 bg-white border-2 border-slate-100 rounded-[28px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all shadow-xl shadow-slate-200/20 font-bold text-lg" placeholder="Qual concurso você está buscando?">
+                </div>
+            </div>
+
+            <!-- Filtros Rápidos -->
+            <div id="filter-bar" class="flex gap-2 overflow-x-auto pb-4 custom-scrollbar">
+                <button onclick="applyFilter('populares')" class="filter-btn active bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20 border border-indigo-600">
+                    <i class="fa-solid fa-fire mr-2"></i> Mais Populares
+                </button>
+                <button onclick="applyFilter('recentes')" class="filter-btn bg-white text-slate-500 hover:bg-slate-50 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100">
+                    <i class="fa-solid fa-calendar-plus mr-2"></i> Adicionados Recentemente
+                </button>
+                <button onclick="applyFilter('abertos')" class="filter-btn bg-white text-slate-500 hover:bg-slate-50 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100">
+                    <i class="fa-solid fa-door-open mr-2"></i> Inscrições Abertas
+                </button>
+                <button onclick="applyFilter('encerrados')" class="filter-btn bg-white text-slate-500 hover:bg-slate-50 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100">
+                    <i class="fa-solid fa-lock mr-2"></i> Encerrados
+                </button>
+            </div>
+        </div>
+
         <!-- Tabela de Concursos -->
         <div class="bg-white border border-slate-100 rounded-[40px] shadow-2xl shadow-slate-200/40 overflow-hidden flex flex-col">
             <div class="overflow-x-auto">
@@ -473,7 +496,7 @@ try {
                             <td colspan="5" class="px-6 py-10 text-center text-slate-400">Nenhum concurso encontrado.</td>
                         </tr>
                         <?php else: foreach ($concursos as $c): ?>
-                        <tr class="group hover:bg-slate-50 transition-colors cursor-pointer" onclick="window.location='ranking.php?cargo_id=<?php echo $c['cargo_id']; ?>'">
+                        <tr class="group hover:bg-slate-50 transition-colors cursor-pointer" onclick="window.location='ranking.php?slug=<?php echo $c['slug'] ?: 'id-'.$c['cargo_id']; ?>'">
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white items-center justify-center border border-slate-200 shadow-sm overflow-hidden shrink-0">
@@ -640,37 +663,50 @@ try {
             }
         });
 
-        // Live Search Logic
+        // Live Search & Filter Logic
         const searchInput = document.getElementById('search-contest');
         const rankingBody = document.getElementById('ranking-body');
+        let currentFilter = 'populares';
+
+        window.applyFilter = function(filter) {
+            currentFilter = filter;
+            
+            // Update UI
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border-indigo-600');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-100');
+            });
+            
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.add('active', 'bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border-indigo-600');
+            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-100');
+            
+            triggerSearch();
+        };
 
         let searchTimeout;
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            const q = e.target.value;
+        searchInput.addEventListener('input', () => triggerSearch());
 
-            if (q.length < 2) {
-                // Se apagar tudo, você pode recarregar a página ou manter o que está lá
-                // Para simplificar, só buscaremos se houver 2+ caracteres
-                return;
-            }
+        async function triggerSearch() {
+            clearTimeout(searchTimeout);
+            const q = searchInput.value;
 
             searchTimeout = setTimeout(async () => {
                 rankingBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400"><i class="fa-solid fa-circle-notch animate-spin mr-2"></i> Buscando...</td></tr>';
                 
                 try {
-                    const response = await fetch(`api/search.php?q=${encodeURIComponent(q)}`);
+                    const response = await fetch(`api/search.php?q=${encodeURIComponent(q)}&filter=${currentFilter}`);
                     const data = await response.json();
 
                     if (data.length === 0) {
-                        rankingBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400">Nenhum resultado encontrado para "' + q + '".</td></tr>';
+                        rankingBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400">Nenhum resultado encontrado.</td></tr>';
                     } else {
                         rankingBody.innerHTML = data.map(c => `
-                             <tr class="group hover:bg-slate-50 transition-colors cursor-pointer" onclick="window.location='ranking.php?cargo_id=${c.cargo_id}'">
+                             <tr class="group hover:bg-slate-50 transition-colors cursor-pointer" onclick="window.location='ranking.php?slug=${c.slug || 'id-'+c.cargo_id}'">
                                 <td class="px-4 sm:px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="flex h-9 w-9 rounded-lg bg-white items-center justify-center border border-slate-200 shadow-sm overflow-hidden shrink-0">
-                                            ${c.image_url ? `<img src="${c.image_url}" class="w-full h-full object-cover" alt="Logo">` : `<i class="fa-solid ${c.icon} text-slate-400 text-sm"></i>`}
+                                            ${c.image_url ? `<img src="${c.image_url}" class="w-full h-full object-cover" alt="Logo">` : `<i class="fa-solid ${c.icon || 'fa-university'} text-slate-400 text-sm"></i>`}
                                         </div>
                                         <div>
                                             <div class="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors">${c.nome_orgao}</div>
@@ -685,14 +721,24 @@ try {
                                         </div>
                                     </div>
                                 </td>
-                                <td class="hidden sm:table-cell px-6 py-5 whitespace-nowrap text-xs">
-                                    <span class="${c.status === 'aberto' ? 'text-success-600 font-medium' : 'text-slate-400'}">● ${c.status === 'aberto' ? 'Recebendo' : 'Encerrado'}</span>
+                                <td class="hidden sm:table-cell px-8 py-6 whitespace-nowrap text-[11px] font-black uppercase tracking-widest">
+                                    ${c.status === 'aberto' ? `
+                                        <span class="text-emerald-600 flex items-center gap-2">
+                                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                            Aberto
+                                        </span>
+                                    ` : `
+                                        <span class="text-slate-400 flex items-center gap-2">
+                                            <span class="w-2 h-2 bg-slate-300 rounded-full"></span>
+                                            Encerrado
+                                        </span>
+                                    `}
                                 </td>
                                 <td class="px-2 sm:px-6 py-4 whitespace-nowrap text-center text-xs sm:text-sm text-slate-400">
                                     ${c.total_amostras}
                                 </td>
                                 <td class="px-2 sm:px-6 py-4 whitespace-nowrap text-center">
-                                    <span class="font-mono font-bold text-emerald-600">${c.pnc_ia > 0 ? parseFloat(c.pnc_ia).toFixed(1) : (c.nota_maxima || '--')}</span>
+                                    <span class="font-mono font-bold text-emerald-600">${c.pnc_ia > 0 ? parseFloat(c.pnc_ia).toFixed(1) : (c.nota_maxima ? parseFloat(c.nota_maxima).toFixed(1) : '--')}</span>
                                 </td>
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
                                     <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-slate-900 transition-colors"></i>
@@ -704,7 +750,7 @@ try {
                     console.error('Search error:', err);
                 }
             }, 300);
-        });
+        }
     </script>
 
     <?php echo getFooter(); ?>

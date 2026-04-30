@@ -11,6 +11,8 @@ $cargo_id = $_GET['cargo_id'] ?? '';
 $sucesso = "";
 $erro = "";
 $info = null;
+$gabaritos_oficiais = [];
+$cargo_materias = [];
 
 // Busca dados se for edição
 if ($cargo_id) {
@@ -44,13 +46,16 @@ if ($cargo_id) {
         $stmt->execute([$cargo_id]);
         $historico = $stmt->fetchAll();
 
-        // Top Colaboradores (Tier List)
+        // Top Colaboradores
         $stmt = $pdo->prepare("SELECT u.nome, u.foto_perfil, u.trust_score, COUNT(el.id) as total 
                                FROM edicoes_log el 
                                JOIN usuarios u ON el.usuario_id = u.id 
                                WHERE el.objeto_id = ? AND el.tipo_objeto = 'cargo' 
                                GROUP BY u.id 
                                ORDER BY total DESC, u.trust_score DESC LIMIT 5");
+        $stmt->execute([$cargo_id]);
+        $colaboradores = $stmt->fetchAll();
+
         // Gabaritos Colaborativos (Versões)
         $stmt = $pdo->prepare("SELECT gc.*, u.nome, u.foto_perfil, 
                                (SELECT COUNT(*) FROM votos_gabaritos WHERE gabarito_colab_id = gc.id) as upvotes
@@ -61,7 +66,7 @@ if ($cargo_id) {
         $stmt->execute([$cargo_id]);
         $versoes_gabarito = $stmt->fetchAll();
 
-        // Buscar gabaritos oficiais (Oficiais)
+        // Buscar gabaritos oficiais
         $gabaritos_oficiais = [];
         $stmt = $pdo->prepare("SELECT versao, respostas_json FROM gabaritos_oficiais WHERE cargo_id = ?");
         $stmt->execute([$cargo_id]);
@@ -71,7 +76,7 @@ if ($cargo_id) {
     }
 }
 
-// Processamento do POST (Simplificado para o Onboarding)
+// Processamento do POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         validateCSRF();
@@ -106,17 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'por_genero' => isset($_POST['por_genero']) ? 1 : 0
         ];
         $nota_corte = !empty($_POST['nota_corte_oficial']) ? $_POST['nota_corte_oficial'] : null;
+        $slug = 'ranking-pos-prova-' . slugify($nome_orgao) . '-' . slugify($nome_cargo);
 
         if ($info) {
-            $stmt = $pdo->prepare("UPDATE cargos SET nome_cargo = ?, total_questoes = ?, tem_discursiva = ?, tem_titulos = ?, pontos_negativos = ?, nota_padronizada = ?, por_genero = ?, nota_corte_oficial = ?, editado_por = ? WHERE id = ?");
-            $stmt->execute([$nome_cargo, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id'], $cargo_id]);
+            $stmt = $pdo->prepare("UPDATE cargos SET nome_cargo = ?, slug = ?, total_questoes = ?, tem_discursiva = ?, tem_titulos = ?, pontos_negativos = ?, nota_padronizada = ?, por_genero = ?, nota_corte_oficial = ?, editado_por = ? WHERE id = ?");
+            $stmt->execute([$nome_cargo, $slug, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id'], $cargo_id]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO cargos (concurso_id, nome_cargo, total_questoes, tem_discursiva, tem_titulos, pontos_negativos, nota_padronizada, por_genero, nota_corte_oficial, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$concurso_id, $nome_cargo, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id']]);
+            $stmt = $pdo->prepare("INSERT INTO cargos (concurso_id, nome_cargo, slug, total_questoes, tem_discursiva, tem_titulos, pontos_negativos, nota_padronizada, por_genero, nota_corte_oficial, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$concurso_id, $nome_cargo, $slug, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id']]);
             $cargo_id = $pdo->lastInsertId();
         }
 
-        // 3. Salvar Modalidades (Cotas)
+        // 3. Salvar Modalidades
         $modalidades = ['ampla', 'pcd', 'ppp', 'hipossuficiente', 'indigena', 'trans', 'quilombola'];
         foreach ($modalidades as $mod) {
             $inscritos = (int)($_POST["inscritos_$mod"] ?? 0);
@@ -132,14 +138,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 4. Salvar Matérias
         if (isset($_POST['materia_nome']) && is_array($_POST['materia_nome'])) {
-            // Limpa matérias antigas se for edição
-            if ($info) {
-                $pdo->prepare("DELETE FROM cargo_materias WHERE cargo_id = ?")->execute([$cargo_id]);
-            }
-            
+            $pdo->prepare("DELETE FROM cargo_materias WHERE cargo_id = ?")->execute([$cargo_id]);
             $stmt = $pdo->prepare("INSERT INTO cargo_materias (cargo_id, nome_materia, sigla_materia, questao_inicio, questao_fim, peso, minimo_acertos, usuario_id) 
                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            
             foreach ($_POST['materia_nome'] as $idx => $nome) {
                 if (empty($nome)) continue;
                 $sigla = $_POST['materia_sigla'][$idx] ?? substr($nome, 0, 3);
@@ -147,18 +148,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fim = (int)$_POST['materia_fim'][$idx];
                 $peso = (float)($_POST['materia_peso'][$idx] ?? 1.0);
                 $minimo = (int)($_POST['materia_minimo'][$idx] ?? 0);
-                
                 $stmt->execute([$cargo_id, $nome, $sigla, $inicio, $fim, $peso, $minimo, $_SESSION['usuario_id']]);
             }
         }
 
-        // 5. Salvar Gabarito Oficial (Com Camada de Proteção)
+        // 5. Salvar Gabarito Oficial
         if (!empty($_POST['gabarito_oficial_json'])) {
             $trust_score = $_SESSION['trust_score'] ?? 0;
-            $is_trusted = ($trust_score >= 80 || isAdmin());
-            
-            if ($is_trusted) {
-                // Usuário confiável: Aplica direto no banco oficial
+            if ($trust_score >= 80 || isAdmin()) {
                 $all_versions = json_decode($_POST['gabarito_oficial_json'], true);
                 if (is_array($all_versions)) {
                     foreach ($all_versions as $versao => $respostas) {
@@ -168,33 +165,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([$cargo_id, $versao, $res_json]);
                     }
                 }
-            } else {
-                // Usuário comum: Salva apenas como sugestão no log para auditoria
-                $status_gabarito = 'pendente_auditoria';
-                // (Será salvo no edicoes_log no passo 7)
             }
         }
 
-        // 6. Recalcular Ranking e Gabarito de Consenso (Skill: Live Updates)
-        require_once __DIR__ . '/../includes/ai_logic.php';
         atualizarConsenso($pdo, $cargo_id);
 
-        // 7. Log da Contribuição (Wiki)
+        // 7. Log da Contribuição
         $trust_score = $_SESSION['trust_score'] ?? 0;
         $status_edicao = ($trust_score >= 80 || isAdmin()) ? 'aprovado' : 'pendente';
         $justificativa = $_POST['justificativa'] ?? '';
-
         $stmt = $pdo->prepare("INSERT INTO edicoes_log (usuario_id, tipo_objeto, objeto_id, dados_novos, score_ia, status, justificativa) 
                                VALUES (?, 'cargo', ?, ?, ?, ?, ?)");
         $stmt->execute([$_SESSION['usuario_id'], $cargo_id, json_encode($_POST), 100, $status_edicao, $justificativa]);
 
         $pdo->commit();
-        
         $sucesso = "Wiki atualizada com sucesso!";
-        if (isset($status_gabarito) && $status_gabarito === 'pendente_auditoria') {
-            $sucesso = "Sua contribuição foi enviada! O gabarito oficial passará por auditoria da IA antes de atualizar os rankings.";
-        }
-        
         header("Location: ranking.php?cargo_id=$cargo_id&wiki_success=1&msg=" . urlencode($sucesso));
         exit;
     } catch (Exception $e) {
@@ -214,575 +199,580 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="assets/js/toasts.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap');
-        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
-        .section-card { margin-bottom: 2rem; background: white; border-radius: 2rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .animate-shake { animation: shake 0.3s ease-in-out infinite; }
-        .bg-mesh {
-            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-                              radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800;900&display=swap');
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --emerald: #10b981;
         }
-    </style>
-    <style>
-        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .bento-card {
+            background: white;
+            border-radius: 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .bento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            border-color: var(--primary);
+        }
+
+        .input-elegant {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .input-elegant:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-modern {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-modern:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .badge-step {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.875rem;
+            background: #eef2ff;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .active-step .badge-step {
+            background: var(--primary);
+            color: white;
+        }
+
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.1); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.3); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
     </style>
 </head>
-<body class="bg-mesh min-h-screen font-sans w-full overflow-x-hidden">
+<body class="min-h-screen relative overflow-x-hidden">
+    <!-- Background Accents -->
+    <div class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute top-[20%] right-[-5%] w-[35%] h-[35%] bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    </div>
 
-    <nav class="glass-panel sticky top-0 z-50 shadow-sm border-b-0">
+    <nav class="sticky top-0 z-50 glass border-b border-slate-200/50">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <a href="index.php" class="flex items-center gap-2">
-                <div class="h-8 w-8"><?php echo getLogoSVG(32); ?></div>
-                <span class="font-black text-xl tracking-tighter text-slate-900">Open<span class="text-indigo-600">Gabarito</span></span>
+                <div class="scale-90"><?php echo getLogoSVG(36); ?></div>
+                <span class="font-outfit font-black text-xl tracking-tight text-slate-900">Open<span class="text-indigo-600">Gabarito</span></span>
             </a>
-            <div class="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">Edição Global Wiki</div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="ranking.php" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Rankings</a>
+                <a href="minha_area.php" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Minha Área</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full">Wiki Engine v3</span>
+            </div>
         </div>
     </nav>
 
-    <main class="max-w-3xl mx-auto px-4 py-8">
+    <main class="max-w-5xl mx-auto px-4 py-12">
+        <!-- Hero Header -->
+        <header class="text-center mb-16 relative">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full mb-6">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Central de Inteligência Colaborativa</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-outfit font-black text-slate-900 mb-4 tracking-tight">
+                Construa o Gabarito <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-emerald-500">do Amanhã.</span>
+            </h1>
+            <p class="text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+                Nossa IA processa milhares de dados, mas o seu olhar humano é o que garante a perfeição. Ajude a democratizar a informação.
+            </p>
+        </header>
+
         <?php if (!empty($erro)): ?>
-            <div class="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl mb-6 flex items-center gap-3">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span class="font-bold"><?php echo $erro; ?></span>
+            <div class="bento-card border-rose-200 bg-rose-50/50 p-6 mb-8 flex items-center gap-4 animate-fade-in">
+                <div class="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </div>
+                <p class="text-rose-700 font-semibold text-sm"><?php echo $erro; ?></p>
             </div>
         <?php endif; ?>
-        <?php if (!empty($sucesso)): ?>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl mb-6 flex items-center gap-3">
-                <i class="fa-solid fa-check"></i>
-                <span class="font-bold"><?php echo $sucesso; ?></span>
-            </div>
-        <?php endif; ?>
-        <!-- Banner Motivacional: Comunidade e Assertividade -->
-        <div class="mb-8 p-6 sm:p-8 rounded-[32px] bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group border-none">
-            <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                <i class="fa-solid fa-users-rays text-7xl"></i>
-            </div>
-            <div class="relative z-10 flex flex-col md:flex-row items-center gap-4 md:gap-6">
-                <div class="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl md:text-3xl text-white shadow-inner shrink-0">
-                    <i class="fa-solid fa-heart-pulse animate-pulse"></i>
-                </div>
-                <div class="flex-grow text-center md:text-left">
-                    <h3 class="text-lg md:text-xl font-black mb-1 leading-tight tracking-tight">O OpenGabarito é 100% Gratuito.</h3>
-                    <p class="text-indigo-100 text-[10px] md:text-xs leading-relaxed max-w-xl font-medium">
-                        Quanto mais pessoas usam e colaboram, mais <span class="text-white font-bold italic underline decoration-white/30">assertiva</span> se torna a nossa IA. Ajude a democratizar a informação: compartilhe este ranking com outros candidatos!
-                    </p>
-                </div>
-                <div class="shrink-0 w-full md:w-auto">
-                    <button type="button" onclick="shareWiki()" class="w-full md:w-auto px-6 py-4 bg-white text-indigo-600 font-black text-[10px] md:text-xs uppercase tracking-widest rounded-2xl hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2 border-none">
-                        <i class="fa-solid fa-share-nodes"></i> Compartilhar
-                    </button>
-                </div>
-            </div>
-        </div>
 
-        <script>
-            function shareWiki() {
-                const shareData = {
-                    title: 'Colabore no OpenGabarito',
-                    text: 'Ajude a completar os dados deste concurso no OpenGabarito!',
-                    url: window.location.href
-                };
-
-                if (navigator.share) {
-                    navigator.share(shareData).catch(err => console.log('Erro ao compartilhar', err));
-                } else {
-                    // Fallback: Copiar para o clipboard
-                    navigator.clipboard.writeText(window.location.href).then(() => {
-                        alert('Link copiado para a área de transferência!');
-                    });
-                }
-            }
-        </script>
-
-        <form method="POST" id="onboarding-form" class="space-y-8">
-            <?php echo csrfInput(); ?>
-            
-            <div id="global-editor" class="animate-fade-in space-y-8">
-                <!-- Cabeçalho -->
-                <div class="text-center">
-                    <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tighter italic">WIKI<span class="text-indigo-600">MOD</span> EDITOR</h1>
-                    <p class="text-slate-500 text-sm max-w-xl mx-auto font-medium">Colabore com a comunidade atualizando os dados deste concurso.</p>
-                </div>
-
-                <!-- Mágica IA (Centralizada) -->
-                <div class="bg-white rounded-[32px] p-8 border-indigo-200 bg-indigo-50/30 border-2 border-dashed shadow-sm">
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-500/20 animate-pulse">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-slate-900 font-black text-xl tracking-tight">Importar do Edital (IA)</h3>
-                                <p class="text-slate-400 text-[10px] uppercase font-black tracking-widest mt-1">Extração automática de dados</p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="document.getElementById('edital-upload').click()" id="ai-import-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/10">
-                            <i class="fa-solid fa-file-pdf"></i> SELECIONAR PDF
+        <!-- Community Bento Hub -->
+        <section class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
+            <!-- PDF Import (Main Action) -->
+            <div class="md:col-span-8 bento-card p-8 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white border-0 overflow-hidden relative group">
+                <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full filter blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 h-full">
+                    <div class="flex-grow">
+                        <h3 class="text-2xl font-outfit font-black mb-2">Power Import (IA)</h3>
+                        <p class="text-indigo-100/80 text-sm font-medium mb-6">
+                            Arraste o edital e nossa IA extrai automaticamente vagas, matérias e regras. Economize 20 minutos de trabalho manual.
+                        </p>
+                        <button type="button" onclick="document.getElementById('edital-upload').click()" id="ai-import-btn" class="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold text-sm shadow-xl hover:bg-indigo-50 transition flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Injetar Edital (PDF)
                         </button>
                         <input type="file" id="edital-upload" accept="application/pdf" class="hidden" onchange="handleEditalUpload(this)">
                     </div>
-
-                    <!-- Status da IA -->
-                    <div id="ai-status-bar" class="hidden mt-8 bg-white rounded-2xl p-6 border-emerald-200 border border-dashed">
-                        <div class="flex items-center justify-between mb-3">
-                            <span id="ai-status-text" class="text-emerald-600 text-xs font-black uppercase tracking-widest">Iniciando processamento...</span>
-                            <span id="ai-status-percent" class="text-emerald-600 text-xs font-black">0%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div id="ai-status-progress" class="bg-emerald-500 h-full w-0 transition-all duration-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]"></div>
-                        </div>
+                    <div class="w-32 h-32 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center text-4xl border border-white/20">
+                        <i class="fa-solid fa-file-pdf"></i>
                     </div>
                 </div>
 
-                <!-- Community Hub: Tier List, Histórico e Versões -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-                    <!-- Tier List (Colaboradores) -->
-                    <div class="bg-white rounded-[32px] p-6 border border-amber-100 bg-amber-50/20 shadow-sm">
-                        <h3 class="text-amber-600 text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-trophy"></i> Top Colaboradores (Tier List)
-                        </h3>
-                        <div class="space-y-4">
-                            <?php if (empty($colaboradores)): ?>
-                                <p class="text-slate-400 text-[10px] italic font-medium">Nenhuma contribuição ainda.</p>
-                            <?php else: foreach ($colaboradores as $idx => $c): ?>
-                                <div class="flex items-center justify-between group">
-                                    <div class="flex items-center gap-3">
-                                        <div class="relative">
-                                            <img src="<?php echo $c['foto_perfil'] ?: 'https://ui-avatars.com/api/?name='.urlencode($c['nome']); ?>" class="w-8 h-8 rounded-lg border border-slate-200">
-                                            <div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white border border-slate-100 flex items-center justify-center text-[8px] font-black text-amber-600 shadow-sm"><?php echo $idx + 1; ?></div>
-                                        </div>
-                                        <div>
-                                            <span class="block text-xs font-bold text-slate-900 group-hover:text-amber-600 transition-colors"><?php echo e($c['nome']); ?></span>
-                                            <span class="text-[8px] text-slate-400 uppercase font-black"><?php echo $c['total']; ?> Edições</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-[10px] font-black text-amber-600/50 italic">TSR <?php echo $c['trust_score']; ?></div>
-                                </div>
-                            <?php endforeach; endif; ?>
+                <!-- Status da IA Overlaid -->
+                <div id="ai-status-bar" class="hidden absolute inset-0 bg-indigo-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-8 text-center">
+                    <div class="w-full max-w-xs">
+                        <div class="flex items-center justify-between mb-2">
+                            <span id="ai-status-text" class="text-xs font-bold uppercase tracking-widest text-indigo-200">Processando...</span>
+                            <span id="ai-status-percent" class="text-white text-xs font-black">0%</span>
                         </div>
-                    </div>
-
-                    <!-- Histórico de Edições -->
-                    <div class="bg-white rounded-[32px] p-6 border border-indigo-100 bg-indigo-50/20 shadow-sm">
-                        <h3 class="text-indigo-600 text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Histórico de Versões
-                        </h3>
-                        <div class="space-y-4 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
-                            <?php if (empty($historico)): ?>
-                                <p class="text-slate-400 text-[10px] italic font-medium">Sem histórico disponível.</p>
-                            <?php else: foreach ($historico as $h): ?>
-                                <div class="border-l-2 border-indigo-500/30 pl-4 py-2 hover:bg-white rounded-r-xl transition-colors cursor-help" title="<?php echo htmlspecialchars($h['justificativa'] ?: 'Sem justificativa'); ?>">
-                                    <span class="block text-[10px] text-slate-900 font-bold"><?php echo e($h['nome']); ?></span>
-                                    <span class="text-[8px] text-slate-400 uppercase font-black"><?php echo date('d/m H:i', strtotime($h['criado_em'])); ?> • <span class="text-indigo-600"><?php echo $h['status']; ?></span></span>
-                                    <?php if($h['justificativa']): ?>
-                                        <p class="text-[9px] text-slate-500 mt-1 italic line-clamp-1">"<?php echo e($h['justificativa']); ?>"</p>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; endif; ?>
-                        </div>
-                    </div>
-
-                    <!-- Versões de Gabarito -->
-                    <div class="bg-white rounded-[32px] p-6 border border-emerald-100 bg-emerald-50/20 shadow-sm">
-                        <h3 class="text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-check-double"></i> Versões de Gabarito
-                        </h3>
-                        <div class="space-y-4">
-                            <?php if (empty($versoes_gabarito)): ?>
-                                <p class="text-slate-400 text-[10px] italic font-medium">Nenhuma versão sugerida.</p>
-                            <?php else: foreach ($versoes_gabarito as $v): ?>
-                                <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 hover:border-emerald-500/30 transition-all cursor-pointer shadow-sm">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-[10px] font-black">V<?php echo $v['versao_prova']; ?></div>
-                                        <div>
-                                            <span class="block text-[10px] text-slate-900 font-bold"><?php echo e($v['nome_fonte']); ?></span>
-                                            <span class="text-[8px] text-slate-400 uppercase font-black"><?php echo $v['upvotes']; ?> Votos</span>
-                                        </div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
-                                </div>
-                            <?php endforeach; endif; ?>
+                        <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                            <div id="ai-status-progress" class="h-full bg-emerald-400 transition-all duration-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]"></div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Seção 1: Identidade -->
-                <!-- Aviso de Beta/IA -->
-                <div class="mb-8 bg-amber-50 rounded-2xl p-6 border-amber-200 border border-dashed animate-pulse">
+            <!-- Contributors List -->
+            <div class="md:col-span-4 bento-card p-6 flex flex-col">
+                <h4 class="text-slate-900 font-bold text-sm mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-crown text-amber-500"></i> Top Contributors
+                </h4>
+                <div class="space-y-3 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                    <?php if (empty($colaboradores)): ?>
+                        <div class="flex flex-col items-center justify-center h-full opacity-30 py-4">
+                            <i class="fa-solid fa-users text-2xl mb-2"></i>
+                            <span class="text-[10px] font-bold uppercase">Aguardando Heróis</span>
+                        </div>
+                    <?php else: foreach ($colaboradores as $c): ?>
+                        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+                            <img src="<?php echo $c['foto_perfil'] ?: 'https://ui-avatars.com/api/?name='.urlencode($c['nome']); ?>" class="w-8 h-8 rounded-lg border border-slate-200">
+                            <div class="flex-grow min-w-0">
+                                <span class="block text-xs font-bold text-slate-800 truncate"><?php echo e($c['nome']); ?></span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest"><?php echo $c['total']; ?> contribuições</span>
+                            </div>
+                        </div>
+                    <?php endforeach; endif; ?>
+                </div>
+            </div>
+
+            <!-- History Time Travel -->
+            <div class="md:col-span-4 bento-card p-6">
+                <h4 class="text-slate-900 font-bold text-sm mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-500"></i> Log Recente
+                </h4>
+                <div class="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                    <?php if (empty($historico)): ?>
+                         <div class="flex flex-col items-center justify-center py-8 opacity-30">
+                            <span class="text-[10px] font-bold uppercase">Sem registros</span>
+                        </div>
+                    <?php else: foreach ($historico as $h): ?>
+                        <div class="relative pl-4 border-l-2 border-slate-100 group">
+                            <div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-slate-200 group-hover:bg-indigo-400 transition-colors"></div>
+                            <span class="block text-[10px] font-bold text-slate-800"><?php echo e($h['nome']); ?></span>
+                            <span class="block text-[9px] text-slate-400 uppercase tracking-tight"><?php echo date('d/m H:i', strtotime($h['criado_em'])); ?></span>
+                        </div>
+                    <?php endforeach; endif; ?>
+                </div>
+            </div>
+
+            <!-- Visual Gallery (If editing) -->
+            <div class="md:col-span-8 bento-card p-6 overflow-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-slate-900 font-bold text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-images text-emerald-500"></i> Galeria da Comunidade
+                    </h4>
+                    <?php if ($info): ?>
+                        <button type="button" onclick="document.getElementById('concurso-image-upload').click()" class="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest flex items-center gap-1">
+                            <i class="fa-solid fa-plus-circle"></i> Enviar Foto
+                        </button>
+                        <input type="file" id="concurso-image-upload" accept="image/*" class="hidden" onchange="uploadContestImage(this)">
+                    <?php endif; ?>
+                </div>
+                
+                <div id="contest-images-container" class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar min-h-[100px]">
+                    <?php if (!$info): ?>
+                        <div class="flex flex-col items-center justify-center w-full py-8 opacity-40">
+                            <i class="fa-solid fa-lock text-xl mb-2"></i>
+                            <p class="text-[10px] font-bold uppercase tracking-widest">Salve os dados básicos primeiro</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="flex items-center justify-center w-full py-8 text-slate-400">
+                            <i class="fa-solid fa-circle-notch animate-spin text-xl"></i>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Form -->
+        <form method="POST" id="onboarding-form" class="space-y-12">
+            <?php echo csrfInput(); ?>
+
+            <!-- Step 1: Basic Information -->
+            <section class="bento-card p-8 md:p-12">
+                <div class="badge-step">01</div>
+                <h2 class="text-2xl font-outfit font-black text-slate-900 mb-2 tracking-tight">Informações Básicas</h2>
+                <p class="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Defina a identidade do concurso e os detalhes da prova.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Órgão Público</label>
+                        <input type="text" id="nome_orgao" name="nome_orgao" required value="<?php echo $info['nome_orgao'] ?? ''; ?>" onchange="checkDuplicates()" placeholder="Ex: Correios, INSS, Polícia Federal" class="w-full input-elegant text-lg font-semibold">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <div id="duplicate-alert" class="hidden mb-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl animate-fade-in">
+                            <div class="flex flex-col md:flex-row items-center gap-6">
+                                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                                </div>
+                                <div class="flex-grow text-center md:text-left">
+                                    <h4 class="text-amber-800 font-bold mb-1">Atenção: Já cadastrado!</h4>
+                                    <p class="text-amber-600 text-xs font-medium">Este concurso já existe no nosso banco de dados. Evite duplicidade para não fragmentar o ranking.</p>
+                                </div>
+                                <div id="duplicate-matches" class="flex flex-col gap-2 w-full md:w-auto"></div>
+                            </div>
+                        </div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Banca Examinadora</label>
+                        <input type="text" id="banca" name="banca" required value="<?php echo $info['banca'] ?? ''; ?>" onchange="checkDuplicates()" placeholder="Ex: Cebraspe, FGV, FCC" class="w-full input-elegant">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cargo / Especialidade</label>
+                        <input type="text" id="nome_cargo" name="nome_cargo" required value="<?php echo $info['nome_cargo'] ?? ''; ?>" onchange="checkDuplicates()" placeholder="Ex: Técnico Administrativo - Área Geral" class="w-full input-elegant text-lg font-semibold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Status do Ranking</label>
+                        <select name="status" class="w-full input-elegant bg-white cursor-pointer appearance-none">
+                            <option value="aberto" <?php echo ($info['c_status'] ?? '') == 'aberto' ? 'selected' : ''; ?>>ABERTO (Coletando Gabaritos)</option>
+                            <option value="consolidado" <?php echo ($info['c_status'] ?? '') == 'consolidado' ? 'selected' : ''; ?>>CONSOLIDADO (Gabarito Oficial OK)</option>
+                            <option value="aguardando" <?php echo ($info['c_status'] ?? '') == 'aguardando' ? 'selected' : ''; ?>>AGUARDANDO PROVA</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Data da Prova</label>
+                        <input type="date" name="data_prova" value="<?php echo $info['data_prova'] ?? ''; ?>" class="w-full input-elegant">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Link Oficial (Organizador)</label>
+                        <input type="url" name="link_oficial" value="<?php echo $info['link_oficial'] ?? ''; ?>" placeholder="https://..." class="w-full input-elegant">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Rules & Mechanics -->
+            <section class="bento-card p-8 md:p-12">
+                <div class="badge-step">02</div>
+                <h2 class="text-2xl font-outfit font-black text-slate-900 mb-2 tracking-tight">Mecânica da Pontuação</h2>
+                <p class="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Como os pontos são calculados neste edital?</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <?php 
+                    $regras_lista = [
+                        ['name' => 'tem_discursiva', 'label' => 'Prova Discursiva', 'desc' => 'Redação ou questões abertas', 'icon' => 'fa-pen-nib'],
+                        ['name' => 'pontos_negativos', 'label' => 'Uma Errada Anula Certa', 'desc' => 'Estilo Cebraspe / Quadrix', 'icon' => 'fa-circle-minus'],
+                        ['name' => 'tem_titulos', 'label' => 'Prova de Títulos', 'desc' => 'Mestrado, Doutorado, Experiência', 'icon' => 'fa-medal'],
+                        ['name' => 'por_genero', 'label' => 'Divisão por Gênero', 'desc' => 'Rankings Masculino e Feminino', 'icon' => 'fa-venus-mars'],
+                        ['name' => 'nota_padronizada', 'label' => 'Nota Padronizada', 'desc' => 'Algoritmo FCC / Vunesp', 'icon' => 'fa-calculator']
+                    ];
+                    foreach ($regras_lista as $regra):
+                    ?>
+                    <label class="relative flex items-center p-5 rounded-2xl border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition group">
+                        <div class="flex-grow flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-indigo-100 text-slate-400 group-hover:text-indigo-600 flex items-center justify-center transition">
+                                <i class="fa-solid <?php echo $regra['icon']; ?>"></i>
+                            </div>
+                            <div>
+                                <span class="block text-sm font-bold text-slate-800"><?php echo $regra['label']; ?></span>
+                                <span class="text-[10px] text-slate-400 font-medium uppercase tracking-tight"><?php echo $regra['desc']; ?></span>
+                            </div>
+                        </div>
+                        <input type="checkbox" name="<?php echo $regra['name']; ?>" <?php echo ($info[$regra['name']] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+
+            <!-- Step 3: Quotas & Vacancies -->
+            <section class="bento-card p-8 md:p-12 overflow-hidden">
+                <div class="badge-step">03</div>
+                <h2 class="text-2xl font-outfit font-black text-slate-900 mb-2 tracking-tight">Quadro de Vagas</h2>
+                <p class="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Quantas pessoas avançam para a próxima etapa?</p>
+
+                <div class="overflow-x-auto -mx-8 md:-mx-12">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-y border-slate-100">
+                                <th class="py-4 px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Modalidade</th>
+                                <th class="py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Inscritos</th>
+                                <th class="py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Vagas Diretas</th>
+                                <th class="py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Para 2ª Etapa</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <?php 
+                            $mods = [
+                                'ampla' => 'Ampla Concorrência',
+                                'pcd' => 'PCD (Deficientes)',
+                                'ppp' => 'Cotas (Pretos/Pardos)',
+                                'hipossuficiente' => 'Hipossuficientes',
+                                'indigena' => 'Indígenas',
+                                'trans' => 'Trans (LGBT+)',
+                                'quilombola' => 'Quilombolas'
+                            ];
+                            foreach ($mods as $key => $label): 
+                            ?>
+                            <tr class="hover:bg-slate-50/30 transition">
+                                <td class="py-4 px-8">
+                                    <span class="text-xs font-bold text-slate-700"><?php echo $label; ?></span>
+                                </td>
+                                <td class="py-4">
+                                    <input type="number" name="inscritos_<?php echo $key; ?>" value="<?php echo $existing_mods[$key]['inscritos'] ?? ''; ?>" placeholder="0" class="w-20 mx-auto block input-elegant py-2 px-2 text-center text-xs">
+                                </td>
+                                <td class="py-4">
+                                    <input type="number" name="vagas_<?php echo $key; ?>" value="<?php echo $existing_mods[$key]['vagas'] ?? ''; ?>" placeholder="0" class="w-20 mx-auto block input-elegant py-2 px-2 text-center text-xs">
+                                </td>
+                                <td class="py-4">
+                                    <input type="number" name="v2e_<?php echo $key; ?>" value="<?php echo $existing_mods[$key]['vagas_2etapa'] ?? ''; ?>" placeholder="0" class="w-20 mx-auto block input-elegant py-2 px-2 text-center text-xs">
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Step 4: Official Answer Key (Gabarito Oficial) -->
+            <section class="bento-card p-8 md:p-12 border-emerald-100 bg-emerald-50/10">
+                <div class="badge-step bg-emerald-100 text-emerald-600">04</div>
+                <h2 class="text-2xl font-outfit font-black text-slate-900 mb-2 tracking-tight">Gabarito Oficial</h2>
+                <p class="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Importe o gabarito liberado pela banca para oficializar os resultados.</p>
+
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 pb-10 border-b border-emerald-100">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
-                            <i class="fa-solid fa-flask-vial"></i>
+                        <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100">
+                            <i class="fa-solid fa-file-invoice text-xl"></i>
                         </div>
                         <div>
-                            <h4 class="text-amber-700 text-xs font-black uppercase tracking-widest">Recurso em Fase Beta</h4>
-                            <p class="text-amber-600/80 text-[10px] leading-relaxed font-medium">A importação de editais via IA e a colaboração automatizada estão em testes. Podem ocorrer falhas na extração de matérias ou vagas. Revise sempre os dados gerados.</p>
+                            <h4 class="text-slate-900 font-bold text-sm">Entrada de Respostas</h4>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-tight">Várias versões? Nossa IA separa elas.</p>
                         </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="document.getElementById('gabarito-upload').click()" class="btn-modern bg-emerald-600 hover:bg-emerald-700 text-[11px] shadow-emerald-200">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> PDF do Gabarito
+                        </button>
+                        <button type="button" onclick="addGabaritoVersion()" class="btn-modern btn-secondary text-[11px]">
+                            <i class="fa-solid fa-plus"></i> Nova Versão
+                        </button>
+                        <input type="file" id="gabarito-upload" accept="application/pdf" class="hidden" onchange="handleGabaritoUpload(this)">
                     </div>
                 </div>
 
-                <div class="section-card p-8">
-                    <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-4 tracking-tight">
-                        <span class="w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-sm shadow-xl shadow-indigo-500/20">01</span>
-                        Identidade do Concurso
-                    </h2>
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="md:col-span-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Órgão Público</label>
-                                <input type="text" id="nome_orgao" name="nome_orgao" required value="<?php echo $info['nome_orgao'] ?? ''; ?>" onchange="checkDuplicates()" placeholder="Ex: Correios, INSS, Polícia Federal" class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium shadow-sm">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Banca Organizadora</label>
-                                <input type="text" id="banca" name="banca" required value="<?php echo $info['banca'] ?? ''; ?>" onchange="checkDuplicates()" placeholder="Ex: Cebraspe, FGV, FCC" class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium shadow-sm">
-                            </div>
-                            <div class="md:col-span-2">
-                                <div id="duplicate-alert" class="hidden mb-6 p-6 bg-indigo-50 border border-indigo-100 rounded-3xl animate-fade-in">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-sm shadow-lg shadow-indigo-500/20">
-                                            <i class="fa-solid fa-triangle-exclamation"></i>
-                                        </div>
-                                        <div class="flex-grow">
-                                            <p class="text-sm text-slate-900 font-black tracking-tight">Concurso já cadastrado encontrado!</p>
-                                            <p class="text-[11px] text-slate-500 font-medium">Encontramos dados que batem com este concurso. Deseja editar o existente ou continuar criando um novo?</p>
-                                        </div>
-                                        <button type="button" onclick="document.getElementById('duplicate-alert').classList.add('hidden')" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-600 text-[10px] font-black rounded-xl transition-all border border-slate-200 uppercase tracking-widest">
-                                            Ignorar
-                                        </button>
-                                    </div>
-                                    <div id="duplicate-matches" class="mt-4 space-y-3">
-                                        <!-- Matches loop via JS -->
-                                    </div>
-                                </div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Nome do Cargo</label>
-                                <input type="text" id="nome_cargo" name="nome_cargo" required value="<?php echo $info['nome_cargo'] ?? ''; ?>" onchange="checkDuplicates()" placeholder="Ex: Técnico Administrativo" class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium shadow-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Status do Concurso</label>
-                                <select name="status" class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-bold shadow-sm appearance-none">
-                                    <option value="aberto" <?php echo ($info['c_status'] ?? '') == 'aberto' ? 'selected' : ''; ?>>Aberto (Recebendo notas)</option>
-                                    <option value="consolidado" <?php echo ($info['c_status'] ?? '') == 'consolidado' ? 'selected' : ''; ?>>Consolidado (Encerrado)</option>
-                                    <option value="aguardando" <?php echo ($info['c_status'] ?? '') == 'aguardando' ? 'selected' : ''; ?>>Aguardando Prova</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Data da Prova</label>
-                                <input type="date" name="data_prova" value="<?php echo $info['data_prova'] ?? ''; ?>" class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-bold shadow-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Corte Oficial</label>
-                                <input type="number" step="0.01" name="nota_corte_oficial" value="<?php echo $info['nota_corte_oficial'] ?? ''; ?>" placeholder="Ex: 85.50" class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-bold shadow-sm">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1 tracking-widest">Link Oficial do Edital</label>
-                                <input type="url" name="link_oficial" value="<?php echo $info['link_oficial'] ?? ''; ?>" placeholder="https://..." class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm font-medium shadow-sm">
-                            </div>
-                        </div>
-                    </div>
+                <!-- Tabs de Versões -->
+                <div id="gabarito-tabs" class="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar"></div>
+
+                <div id="ai-gabarito-status" class="hidden mb-10 p-10 bg-white border border-dashed border-emerald-200 rounded-3xl text-center">
+                    <i class="fa-solid fa-circle-notch animate-spin text-emerald-500 text-3xl mb-4"></i>
+                    <p class="text-emerald-700 font-bold" id="gabarito-status-text">Analisando estrutura do gabarito...</p>
                 </div>
 
-                <!-- Seção 2: Regras -->
-                <div class="section-card p-8">
-                    <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-4 tracking-tight">
-                        <span class="w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-sm shadow-xl shadow-indigo-500/20">02</span>
-                        Regras e Engenharia
-                    </h2>
+                <div id="gabarito-container" class="space-y-8">
+                    <div class="p-6 md:p-10 bg-white border border-slate-100 rounded-3xl shadow-inner-sm overflow-x-auto">
+                        <div id="gabarito-respostas-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-4"></div>
+                    </div>
+                </div>
+                <input type="hidden" name="gabarito_oficial_json" id="gabarito-oficial-json">
+            </section>
+
+            <!-- Step 5: Structure & Subjects -->
+            <section class="bento-card p-8 md:p-12">
+                <div class="badge-step">05</div>
+                <h2 class="text-2xl font-outfit font-black text-slate-900 mb-2 tracking-tight">Matérias e Estrutura</h2>
+                <p class="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Divida a prova por disciplinas para análises detalhadas.</p>
+
+                <div class="space-y-10">
                     <div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label class="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-100 hover:border-indigo-200 cursor-pointer transition-all group shadow-sm">
-                                <input type="checkbox" name="tem_discursiva" <?php echo ($info['tem_discursiva'] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-200 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 bg-slate-50 transition-all">
-                                <div>
-                                    <span class="block text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Prova Discursiva?</span>
-                                    <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Redação, Estudo de Caso</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-100 hover:border-rose-200 cursor-pointer transition-all group shadow-sm">
-                                <input type="checkbox" name="pontos_negativos" <?php echo ($info['pontos_negativos'] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-200 text-rose-600 focus:ring-4 focus:ring-rose-500/10 bg-slate-50 transition-all">
-                                <div>
-                                    <span class="block text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors">Errada anula certa?</span>
-                                    <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Padrão Cebraspe</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-100 hover:border-indigo-200 cursor-pointer transition-all group shadow-sm">
-                                <input type="checkbox" name="tem_titulos" <?php echo ($info['tem_titulos'] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-200 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 bg-slate-50 transition-all">
-                                <div>
-                                    <span class="block text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Avaliação de Títulos?</span>
-                                    <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Mestrado, Doutorado</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-100 hover:border-indigo-200 cursor-pointer transition-all group shadow-sm">
-                                <input type="checkbox" name="por_genero" <?php echo ($info['por_genero'] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-200 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 bg-slate-50 transition-all">
-                                <div>
-                                    <span class="block text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Vagas por Gênero?</span>
-                                    <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Masc ♂ / Fem ♀</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-4 p-5 bg-white rounded-2xl border border-slate-100 hover:border-indigo-200 cursor-pointer transition-all group shadow-sm md:col-span-2">
-                                <input type="checkbox" name="nota_padronizada" <?php echo ($info['nota_padronizada'] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-200 text-indigo-600 focus:ring-4 focus:ring-indigo-500/10 bg-slate-50 transition-all">
-                                <div>
-                                    <span class="block text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Nota Padronizada?</span>
-                                    <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Cálculo FCC / VUNESP (Média + Desvio)</span>
-                                </div>
-                            </label>
-                        </div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Total de Questões</label>
+                        <input type="number" name="total_questoes" required value="<?php echo $info['total_questoes'] ?? 60; ?>" class="w-full input-elegant text-4xl h-20 text-center font-outfit font-black text-indigo-600">
                     </div>
-                </div>
 
-                <!-- Seção 3: Vagas -->
-                <div class="section-card p-8">
-                    <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-4 tracking-tight">
-                        <span class="w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-sm shadow-xl shadow-indigo-500/20">03</span>
-                        Vagas e Inscritos
-                    </h2>
-                    <div class="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="text-[10px] font-black text-slate-400 uppercase border-b border-slate-50 bg-slate-50/50">
-                                        <th class="py-5 px-6 tracking-widest">Modalidade</th>
-                                        <th class="py-5 text-center tracking-widest">Inscritos</th>
-                                        <th class="py-5 text-center tracking-widest">Vagas</th>
-                                        <th class="py-5 text-center tracking-widest">Vagas 2ª Etapa</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-50">
-                                    <?php 
-                                    $mods = [
-                                        'ampla' => 'Ampla Concorrência',
-                                        'pcd' => 'PCD',
-                                        'ppp' => 'Pretos/Pardos',
-                                        'hipossuficiente' => 'Hipossuficiente',
-                                        'indigena' => 'Indígena',
-                                        'trans' => 'Transexual',
-                                        'quilombola' => 'Quilombola'
-                                    ];
-                                    foreach ($mods as $key => $label): 
-                                    ?>
-                                    <tr class="hover:bg-slate-50 transition-colors group">
-                                        <td class="py-4 px-6 text-sm font-bold text-slate-700 group-hover:text-indigo-600"><?php echo $label; ?></td>
-                                        <td class="py-4"><input type="number" name="inscritos_<?php echo $key; ?>" value="<?php echo $existing_mods[$key]['inscritos'] ?? ''; ?>" placeholder="0" class="w-24 mx-auto block bg-white border border-slate-100 rounded-xl py-2 px-3 text-center text-sm text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"></td>
-                                        <td class="py-4"><input type="number" name="vagas_<?php echo $key; ?>" value="<?php echo $existing_mods[$key]['vagas'] ?? ''; ?>" placeholder="0" class="w-24 mx-auto block bg-white border border-slate-100 rounded-xl py-2 px-3 text-center text-sm text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"></td>
-                                        <td class="py-4"><input type="number" name="v2e_<?php echo $key; ?>" value="<?php echo $existing_mods[$key]['vagas_2etapa'] ?? ''; ?>" placeholder="0" class="w-24 mx-auto block bg-white border border-slate-100 rounded-xl py-2 px-3 text-center text-sm text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seção Especial: Gabarito Oficial (Estilo Admin) -->
-                <div class="section-card p-8 bg-white border-2 border-emerald-100 shadow-xl shadow-emerald-500/5">
-                    <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-4 tracking-tight">
-                        <span class="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-sm shadow-xl shadow-emerald-500/20">
-                            <i class="fa-solid fa-file-invoice"></i>
-                        </span>
-                        Gabarito Oficial
-                    </h2>
-                    <div>
-                        <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 pb-8 border-b border-slate-100">
-                            <div>
-                                <h3 class="text-slate-900 font-black tracking-tight text-lg">Importação via PDF ou Manual</h3>
-                                <p class="text-slate-500 text-sm mt-1 font-medium">Insira as respostas oficiais para recalcular o ranking. Você pode adicionar quantas versões quiser.</p>
-                                <?php if (($_SESSION['trust_score'] ?? 0) < 80 && !isAdmin()): ?>
-                                    <div class="mt-4 flex items-center gap-3 text-[10px] text-indigo-600 font-black bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 uppercase tracking-widest">
-                                        <i class="fa-solid fa-shield-halved"></i> SUA EDIÇÃO PASSARÁ POR AUDITORIA DA IA
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            <div class="flex gap-3">
-                                <button type="button" onclick="document.getElementById('gabarito-upload').click()" id="ai-gabarito-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/10 uppercase tracking-widest">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i> IMPORTAR PDF (IA)
-                                </button>
-                                <button type="button" onclick="addGabaritoVersion()" class="bg-white hover:bg-slate-50 text-indigo-600 px-6 py-3 rounded-2xl text-[10px] font-black transition-all flex items-center gap-2 border border-slate-200 uppercase tracking-widest shadow-sm">
-                                    <i class="fa-solid fa-plus text-indigo-600"></i> NOVA VERSÃO
-                                </button>
-                            </div>
-                            <input type="file" id="gabarito-upload" accept="application/pdf" class="hidden" onchange="handleGabaritoUpload(this)">
-                        </div>
-
-                        <!-- Tabs de Versões -->
-                        <div id="gabarito-tabs" class="flex gap-3 mb-8 overflow-x-auto pb-2 custom-scrollbar">
-                            <!-- Gerado via JS -->
-                        </div>
-
-                        <div id="ai-gabarito-status" class="hidden mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
-                            <div class="flex items-center gap-4">
-                                <i class="fa-solid fa-circle-notch animate-spin text-emerald-500"></i>
-                                <span class="text-sm text-slate-700 font-bold" id="gabarito-status-text">Lendo PDF...</span>
-                            </div>
-                        </div>
-
-                        <div id="gabarito-container" class="space-y-6">
-                            <!-- Grid de Respostas será gerado aqui para a versão ativa -->
-                            <div id="respostas-grid-container" class="p-8 bg-white rounded-[32px] border border-slate-100 shadow-inner overflow-x-auto">
-                                <div id="gabarito-respostas-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-4">
-                                    <!-- Selects via JS -->
-                                </div>
-                            </div>
+                    <div id="materias-container" class="space-y-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-slate-900 font-bold text-sm">Distribuição das Disciplinas</h4>
+                            <button type="button" onclick="addMateriaRow()" class="btn-modern text-[10px] py-2 px-4">
+                                <i class="fa-solid fa-plus"></i> Adicionar Matéria
+                            </button>
                         </div>
                         
-                        <!-- Dados estruturados para o POST -->
-                        <input type="hidden" name="gabarito_oficial_json" id="gabarito-oficial-json">
-                    </div>
-                </div>
+                        <div id="materias-list" class="space-y-4"></div>
 
-                <!-- Seção 4: Matérias -->
-                <div class="section-card p-8">
-                    <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-4 tracking-tight">
-                        <span class="w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-sm shadow-xl shadow-indigo-500/20">04</span>
-                        Engenharia da Prova
-                    </h2>
-                    <div class="space-y-8">
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase mb-3 ml-1 tracking-widest">Total de Questões da Prova</label>
-                            <input type="number" name="total_questoes" required value="<?php echo $info['total_questoes'] ?? 60; ?>" class="w-full bg-white border border-slate-200 rounded-[32px] px-8 py-6 text-slate-900 text-4xl font-black focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all shadow-sm">
-                        </div>
-
-                        <div id="materias-container" class="space-y-6">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Matérias cadastradas</p>
-                                <button type="button" onclick="addMateriaRow()" class="text-indigo-600 hover:bg-indigo-600 hover:text-white text-[10px] font-black uppercase tracking-widest bg-indigo-50 px-5 py-3 rounded-2xl border border-indigo-100 transition-all shadow-sm">
-                                    <i class="fa-solid fa-plus mr-1"></i> Adicionar Matéria
-                                </button>
-                            </div>
-                            
-                            <div id="materias-list" class="space-y-4">
-                                <!-- JS Generated Rows -->
-                            </div>
-
-                            <div id="materias-empty" class="bg-slate-50 border-2 border-slate-100 p-12 rounded-[40px] text-center border-dashed">
-                                <div class="text-slate-200 text-5xl mb-4"><i class="fa-solid fa-layer-group"></i></div>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Nenhuma matéria cadastrada ainda.</p>
-                            </div>
-                        </div>
-
-                        <div class="pt-8 space-y-4">
-                            <label class="block">
-                                <span class="text-[10px] font-black text-slate-400 uppercase mb-3 ml-1 block tracking-widest">Justificativa da Edição (Opcional)</span>
-                                <textarea name="justificativa" rows="3" placeholder="Explique por que está sugerindo estas alterações (ex: Retificação do Edital nº 02...)" class="w-full bg-white border border-slate-200 rounded-[32px] px-8 py-6 text-slate-900 outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all text-sm font-medium shadow-sm"></textarea>
-                            </label>
-                            <p class="text-[10px] text-slate-400 font-medium italic ml-1">* Suas edições serão analisadas pela comunidade e pela IA. Usuários com alto Trust Score têm aprovação imediata.</p>
-                        </div>
-
-                        <div class="pt-8 border-t border-slate-100">
-                            <input type="hidden" name="finalizar" value="1">
-                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-6 rounded-[32px] transition-all shadow-xl shadow-emerald-500/20 text-lg flex items-center justify-center gap-3 group uppercase tracking-widest">
-                                <i class="fa-solid fa-cloud-arrow-up group-hover:scale-110 transition-transform"></i> Finalizar & Publicar Wiki
-                            </button>
-                            <p class="text-center text-[10px] text-indigo-600 mt-6 uppercase font-black tracking-widest flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-people-group"></i> A força da nossa Wiki é a sua participação.
-                            </p>
-                            <p class="text-center text-[10px] text-slate-400 mt-2 font-medium">É de graça hoje, amanhã e sempre. Quanto mais você ajuda, mais o OpenGabarito acerta para todos.</p>
+                        <div id="materias-empty" class="p-12 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-3xl text-center">
+                            <i class="fa-solid fa-layer-group text-slate-200 text-4xl mb-4"></i>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Nenhuma matéria adicionada ainda</p>
                         </div>
                     </div>
-                </div>
 
+                    <div class="pt-8 space-y-6 border-t border-slate-100">
+                        <label class="block">
+                            <span class="text-xs font-black text-slate-400 uppercase mb-3 ml-1 block tracking-widest">Justificativa da Edição</span>
+                            <textarea name="justificativa" rows="3" placeholder="Ex: Retificação do Edital n° 02/2026..." class="w-full input-elegant text-sm"></textarea>
+                        </label>
+                        <div class="flex items-start gap-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                            <i class="fa-solid fa-circle-info text-indigo-500 mt-1"></i>
+                            <p class="text-[10px] text-indigo-700 font-medium leading-relaxed uppercase tracking-tight">Suas edições alimentam a nossa IA. Usuários com alto Trust Score têm aprovação instantânea.</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-8">
+                        <input type="hidden" name="finalizar" value="1">
+                        <button type="submit" class="w-full btn-modern py-6 text-xl shadow-xl shadow-indigo-100">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Publicar na Wiki
+                        </button>
+                    </div>
+                </div>
+            </section>
         </form>
     </main>
 
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
         async function handleEditalUpload(input) {
+            function updateStatus(pct, text) {
+                const statusBar = document.getElementById('ai-status-bar');
+                const statusText = document.getElementById('ai-status-text');
+                const statusPercent = document.getElementById('ai-status-percent');
+                const statusProgress = document.getElementById('ai-status-progress');
+                if (statusProgress) statusProgress.style.width = pct + '%';
+                if (statusPercent) statusPercent.innerText = pct + '%';
+                if (statusText) statusText.innerText = text;
+            }
+
             const file = input.files[0];
             if (!file) return;
 
-            const btn = document.getElementById('ai-import-btn');
+            if (typeof pdfjsLib === 'undefined') {
+                alert("Motor de PDF carregando...");
+                return;
+            }
+
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             const statusBar = document.getElementById('ai-status-bar');
-            const statusText = document.getElementById('ai-status-text');
-            const statusPercent = document.getElementById('ai-status-percent');
-            const statusProgress = document.getElementById('ai-status-progress');
-            
-            const originalHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> PROCESSANDO...';
-            
             statusBar.classList.remove('hidden');
-            updateStatus(20, "Lendo PDF...");
+            updateStatus(10, "Lendo PDF...");
 
             try {
-                // 1. Extrair texto do PDF
                 const reader = new FileReader();
                 reader.onload = async function() {
                     try {
                         const typedarray = new Uint8Array(this.result);
                         const pdf = await pdfjsLib.getDocument(typedarray).promise;
                         let fullText = "";
-                        
                         updateStatus(40, `Analisando ${pdf.numPages} páginas...`);
-
                         const maxPages = 50;
                         for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
                             const page = await pdf.getPage(i);
                             const content = await page.getTextContent();
                             fullText += content.items.map(item => item.str).join(" ");
                         }
-                        fullText = fullText.replace(/\s+/g, ' ').trim();
-                        if (pdf.numPages > maxPages) {
-                            // Pega as últimas 5 páginas também
-                            for (let i = Math.max(maxPages + 1, pdf.numPages - 5); i <= pdf.numPages; i++) {
-                                const page = await pdf.getPage(i);
-                                const content = await page.getTextContent();
-                                fullText += content.items.map(item => item.str).join(" ");
-                            }
-                        }
-                        fullText = fullText.replace(/\s+/g, ' ').trim();
-
-                        updateStatus(60, "IA: Extraindo dados estruturados...");
-
-                        // 2. Enviar para API
+                        updateStatus(70, "IA extraindo dados...");
                         const response = await fetch('api/api_ai_parse_edital.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ text: fullText })
                         });
-                        
-                        updateStatus(80, "IA: Validando informações...");
                         const res = await response.json();
-
                         if (res.success) {
-                            updateStatus(100, "Concluído!");
+                            updateStatus(100, "Sucesso!");
                             fillForm(res.data);
-                            Toast.show("Edital processado com sucesso!", "success");
-                            setTimeout(() => statusBar.classList.add('hidden'), 3000);
+                            Toast.show("Dados extraídos pela IA!", "success");
+                            setTimeout(() => statusBar.classList.add('hidden'), 2000);
                         } else {
-                            const detail = res.details ? `\nDetalhes: ${res.details}` : '';
-                            throw new Error(res.error + detail);
+                            throw new Error(res.error);
                         }
                     } catch (err) {
-                        handleError(err);
-                    } finally {
-                        btn.disabled = false;
-                        btn.innerHTML = originalHtml;
+                        Toast.show("Erro: " + err.message, "error");
+                        statusBar.classList.add('hidden');
                     }
                 };
                 reader.readAsArrayBuffer(file);
             } catch (err) {
-                handleError(err);
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-            }
-
-            function updateStatus(pct, text) {
-                statusProgress.style.width = pct + '%';
-                statusPercent.innerText = pct + '%';
-                statusText.innerText = text;
-            }
-
-            function handleError(err) {
-                console.error(err);
-                Toast.show(err.message || "Erro ao processar PDF.", "error");
                 statusBar.classList.add('hidden');
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
             }
         }
 
@@ -794,13 +784,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     else el.value = val;
                 }
             };
-
-            // Passo 1
             if (data.nome_orgao) setVal('nome_orgao', data.nome_orgao);
             if (data.banca) setVal('banca', data.banca);
             if (data.nome_cargo) setVal('nome_cargo', data.nome_cargo);
-
-            // Passo 2
             if (data.regras) {
                 setVal('tem_discursiva', data.regras.tem_discursiva, true);
                 setVal('pontos_negativos', data.regras.pontos_negativos, true);
@@ -808,83 +794,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setVal('por_genero', data.regras.por_genero, true);
                 setVal('nota_padronizada', data.regras.nota_padronizada, true);
             }
-
-            // Passo 4
             if (data.total_questoes) setVal('total_questoes', data.total_questoes);
-            
-            // Vagas (Cotas)
             if (data.vagas) {
-                Object.keys(data.vagas).forEach(key => {
-                    let fieldKey = key;
-                    if (key === 'ppd') fieldKey = 'pcd'; // Mapeia PPD para PCD se a IA retornar assim
-                    setVal(`vagas_${fieldKey}`, data.vagas[key]);
-                });
+                Object.keys(data.vagas).forEach(key => setVal(`vagas_${key === 'ppd' ? 'pcd' : key}`, data.vagas[key]));
             }
-            
-            // Indicação visual de campos preenchidos
-            document.querySelectorAll('input').forEach(input => {
-                if (input.value && input.type !== 'hidden' && input.type !== 'checkbox') {
-                    input.classList.add('ring-2', 'ring-emerald-500/50');
-                    setTimeout(() => input.classList.remove('ring-2', 'ring-emerald-500/50'), 3000);
-                }
-            });
-
-            // Preencher Matérias (Passo 4)
-                    data.materias.forEach(m => addMateriaRow(m));
-                }
+            if (data.materias) {
+                document.getElementById('materias-list').innerHTML = '';
+                data.materias.forEach(m => addMateriaRow(m));
             }
-
-            // Verificar Duplicidade após preenchimento da IA
             checkDuplicates();
         }
 
         function addMateriaRow(m = {}) {
             const list = document.getElementById('materias-list');
             document.getElementById('materias-empty').classList.add('hidden');
-            
             const div = document.createElement('div');
-            div.className = "bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm animate-fade-in";
+            div.className = "flex flex-col md:flex-row gap-4 p-5 bg-white border border-slate-100 rounded-2xl shadow-sm animate-fade-in";
             div.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
-                        <label class="text-[9px] font-black text-slate-400 uppercase mb-2 ml-1 block tracking-widest">Nome da Matéria</label>
-                        <input type="text" name="materia_nome[]" value="${m.nome || ''}" required placeholder="Ex: Português" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none">
+                        <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Disciplina</label>
+                        <input type="text" name="materia_nome[]" value="${m.nome || ''}" required placeholder="Ex: Português" class="w-full input-elegant text-xs">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase mb-2 ml-1 block tracking-widest">Sigla</label>
-                        <input type="text" name="materia_sigla[]" value="${m.sigla || ''}" placeholder="PT" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none">
+                        <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Sigla</label>
+                        <input type="text" name="materia_sigla[]" value="${m.sigla || ''}" placeholder="PT" class="w-full input-elegant text-xs text-center">
                     </div>
                     <div class="flex gap-2">
                         <div class="flex-1">
-                            <label class="text-[9px] font-black text-slate-400 uppercase mb-2 block text-center tracking-widest">Início</label>
-                            <input type="number" name="materia_inicio[]" value="${m.inicio || ''}" required class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-center">
+                            <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Início</label>
+                            <input type="number" name="materia_inicio[]" value="${m.inicio || ''}" required class="w-full input-elegant text-xs text-center">
                         </div>
                         <div class="flex-1">
-                            <label class="text-[9px] font-black text-slate-400 uppercase mb-2 block text-center tracking-widest">Fim</label>
-                            <input type="number" name="materia_fim[]" value="${m.fim || ''}" required class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-center">
+                            <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Fim</label>
+                            <input type="number" name="materia_fim[]" value="${m.fim || ''}" required class="w-full input-elegant text-xs text-center">
                         </div>
                     </div>
-                    <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase mb-2 ml-1 block text-center tracking-widest">Peso</label>
-                        <input type="number" step="0.1" name="materia_peso[]" value="${m.peso || '1.0'}" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-center">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="button" onclick="this.parentElement.parentElement.parentElement.remove()" class="w-full bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-100 h-[46px] rounded-xl transition-all shadow-sm group">
-                            <i class="fa-solid fa-trash-can group-hover:scale-110 transition-transform"></i>
-                        </button>
-                    </div>
                 </div>
-            `;
-            list.appendChild(div);
-        }i>
-                        </button>
+                <div class="flex items-end gap-2 shrink-0">
+                    <div class="w-20">
+                        <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Peso</label>
+                        <input type="number" step="0.1" name="materia_peso[]" value="${m.peso || '1.0'}" class="w-full input-elegant text-xs text-center">
                     </div>
+                    <button type="button" onclick="this.closest('.animate-fade-in').remove()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition shadow-sm border border-rose-100">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
                 </div>
             `;
             list.appendChild(div);
         }
 
-        // Se for edição, carregar matérias existentes
         <?php if ($cargo_id && !empty($cargo_materias)): ?>
             document.addEventListener('DOMContentLoaded', () => {
                 <?php foreach ($cargo_materias as $m): ?>
@@ -898,62 +857,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             });
         <?php endif; ?>
+
         let gabaritoData = <?php echo json_encode($gabaritos_oficiais ?: new stdClass()); ?>; 
         let currentGabaritoVersion = 1;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            renderGabaritoTabs();
-            
-            // Listener para total de questões
-            const totalInput = document.querySelector('input[name="total_questoes"]');
-            if (totalInput) {
-                totalInput.addEventListener('input', () => {
-                    renderGabaritoGrid();
-                });
-            }
-        });
-
         function renderGabaritoTabs() {
             const tabs = document.getElementById('gabarito-tabs');
+            if (!tabs) return;
             const versions = Object.keys(gabaritoData).map(v => parseInt(v)).sort((a,b) => a-b);
-            
-            // Se não houver versões, cria a V1
-            if (versions.length === 0) {
-                gabaritoData[1] = {};
-                versions.push(1);
-            }
-
+            if (versions.length === 0) { gabaritoData[1] = {}; versions.push(1); }
             tabs.innerHTML = versions.map(v => `
                 <button type="button" onclick="switchGabaritoVersion(${v})" 
-                        class="px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${currentGabaritoVersion == v ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-500/20' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'}">
-                    Versão ${v}
+                        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentGabaritoVersion == v ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}">
+                    V${v}
                 </button>
             `).join('');
-            
             renderGabaritoGrid();
         }
 
         function renderGabaritoGrid() {
             const grid = document.getElementById('gabarito-respostas-grid');
+            if (!grid) return;
             const total = parseInt(document.querySelector('input[name="total_questoes"]').value) || 0;
             const currentAnswers = gabaritoData[currentGabaritoVersion] || {};
-            
             if (total === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center p-4 text-slate-500 italic text-xs">Defina o total de questões para liberar o gabarito.</div>';
+                grid.innerHTML = '<div class="col-span-full py-10 opacity-30 text-center font-bold text-xs">AGUARDANDO TOTAL DE QUESTÕES</div>';
                 return;
             }
-
             let html = '';
             for (let i = 1; i <= total; i++) {
                 const val = currentAnswers[i] || '';
                 html += `
-                    <div class="flex flex-col gap-2">
-                        <span class="text-[10px] text-slate-400 font-black ml-1 tracking-tighter">Q${i}</span>
-                        <select onchange="updateGabaritoAnswer(${i}, this.value)" class="bg-white border border-slate-100 rounded-xl p-3 text-sm text-slate-900 font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-sm transition-all appearance-none text-center">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[9px] font-black text-slate-300 ml-1">Q${i}</span>
+                        <select onchange="updateGabaritoAnswer(${i}, this.value)" class="input-elegant p-2 text-xs text-center cursor-pointer appearance-none bg-white font-bold ${val ? 'border-emerald-200 bg-emerald-50/30 text-emerald-700' : ''}">
                             <option value="">-</option>
-                            ${['A','B','C','D','E','X'].map(alt => `
-                                <option value="${alt}" ${val === alt ? 'selected' : ''}>${alt === 'X' ? 'ANUL' : alt}</option>
-                            `).join('')}
+                            ${['A','B','C','D','E','X'].map(alt => `<option value="${alt}" ${val === alt ? 'selected' : ''}>${alt === 'X' ? 'ANUL' : alt}</option>`).join('')}
                         </select>
                     </div>
                 `;
@@ -965,7 +904,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function updateGabaritoAnswer(q, val) {
             if (!gabaritoData[currentGabaritoVersion]) gabaritoData[currentGabaritoVersion] = {};
             gabaritoData[currentGabaritoVersion][q] = val;
-            updateGabaritoJson();
+            renderGabaritoGrid();
         }
 
         function addGabaritoVersion() {
@@ -982,105 +921,134 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         function updateGabaritoJson() {
-            document.getElementById('gabarito-oficial-json').value = JSON.stringify(gabaritoData);
+            const el = document.getElementById('gabarito-oficial-json');
+            if (el) el.value = JSON.stringify(gabaritoData);
         }
-
-        // Listener para total de questões
-        document.querySelector('input[name="total_questoes"]').addEventListener('input', () => {
-            renderGabaritoGrid();
-        });
 
         async function handleGabaritoUpload(input) {
             const file = input.files[0];
             if (!file) return;
-
             const statusBox = document.getElementById('ai-gabarito-status');
             const statusText = document.getElementById('gabarito-status-text');
-            
             statusBox.classList.remove('hidden');
-            
             try {
                 const reader = new FileReader();
                 reader.onload = async function() {
-                    try {
-                        const typedarray = new Uint8Array(this.result);
-                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                        let fullText = "";
-                        
-                        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            fullText += content.items.map(item => item.str).join(" ");
-                        }
-
-                        statusText.innerText = "IA extraindo respostas...";
-
-                        const response = await fetch('api/api_ai_parse_gabarito.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ text: fullText })
-                        });
-                        
-                        const res = await response.json();
-                        if (res.success) {
-                            const versions = res.data; // Array de { version, answers }
-                            versions.forEach(v => {
-                                gabaritoData[v.version] = v.answers;
-                            });
-                            
-                            currentGabaritoVersion = versions[0].version;
-                            renderGabaritoTabs();
-                            Toast.show(`${versions.length} versões extraídas!`, "success");
-                        } else {
-                            throw new Error(res.error || "IA não reconheceu o gabarito.");
-                        }
-                    } catch (err) {
-                        Toast.show(err.message, "error");
-                    } finally {
-                        statusBox.classList.add('hidden');
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = "";
+                    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        fullText += content.items.map(item => item.str).join(" ");
                     }
+                    statusText.innerText = "IA extraindo respostas...";
+                    const response = await fetch('api/api_ai_parse_gabarito.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: fullText })
+                    });
+                    const res = await response.json();
+                    if (res.success) {
+                        res.data.forEach(v => { gabaritoData[v.version] = v.answers; });
+                        currentGabaritoVersion = res.data[0].version;
+                        renderGabaritoTabs();
+                        Toast.show(`${res.data.length} versões encontradas!`, "success");
+                    }
+                    statusBox.classList.add('hidden');
                 };
                 reader.readAsArrayBuffer(file);
-            } catch (err) {
-                Toast.show("Erro ao ler arquivo.", "error");
-                statusBox.classList.add('hidden');
-            }
+            } catch (err) { statusBox.classList.add('hidden'); }
         }
 
         async function checkDuplicates() {
             const orgao = document.getElementById('nome_orgao').value;
             const banca = document.getElementById('banca').value;
-            
             if (orgao.length < 3 || banca.length < 2) return;
-            
             const alertBox = document.getElementById('duplicate-alert');
             const matchesBox = document.getElementById('duplicate-matches');
-            
             try {
-                const response = await fetch(`includes/api_check_duplicate.php?orgao=${encodeURIComponent(orgao)}&banca=${encodeURIComponent(banca)}`);
+                const response = await fetch(`api/check_duplicate.php?orgao=${encodeURIComponent(orgao)}&banca=${encodeURIComponent(banca)}`);
                 const res = await response.json();
-                
                 if (res.exists && res.matches.length > 0) {
                     alertBox.classList.remove('hidden');
                     matchesBox.innerHTML = res.matches.map(m => `
-                        <a href="colaborar.php?cargo_id=${m.cargo_id}" class="flex items-center justify-between p-4 bg-white hover:bg-indigo-50 rounded-[24px] border border-slate-100 transition-all group shadow-sm">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black shadow-inner">WIKI</div>
-                                <div>
-                                    <span class="block text-sm font-black text-slate-900 tracking-tight">${m.nome_orgao}</span>
-                                    <span class="text-[10px] text-indigo-600 font-black uppercase tracking-widest">${m.nome_cargo || 'Cargo Geral'} • ${m.banca}</span>
-                                </div>
+                        <a href="colaborar.php?cargo_id=${m.cargo_id}" class="flex items-center justify-between p-3 bg-white hover:bg-indigo-50 rounded-xl border border-slate-100 transition shadow-sm">
+                            <div class="text-left">
+                                <span class="block text-[10px] font-black text-slate-900 leading-tight">${m.nome_orgao}</span>
+                                <span class="text-[8px] text-indigo-500 font-bold uppercase">${m.nome_cargo || 'Geral'}</span>
                             </div>
-                            <span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">EDITAR EXISTENTE <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 ml-4"></i>
                         </a>
                     `).join('');
-                } else {
-                    alertBox.classList.add('hidden');
-                }
-            } catch (err) {
-                console.error("Erro ao verificar duplicidade:", err);
-            }
+                } else { alertBox.classList.add('hidden'); }
+            } catch (err) {}
         }
+
+        async function loadContestImages() {
+            const contestId = "<?php echo $info['concurso_id'] ?? ''; ?>";
+            if (!contestId) return;
+            const container = document.getElementById('contest-images-container');
+            if (!container) return;
+            try {
+                const response = await fetch(`api/api_concurso_imagem.php?action=listar&concurso_id=${contestId}`);
+                const res = await response.json();
+                if (res.success && res.data.length > 0) {
+                    container.innerHTML = res.data.map((img, idx) => `
+                        <div class="shrink-0 w-48 bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col group transition shadow-sm">
+                            <div class="h-28 w-full relative">
+                                <img src="${img.url}" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            </div>
+                            <div class="p-2 flex items-center justify-around border-t border-slate-50">
+                                <button type="button" onclick="voteImage(${img.id}, 1)" class="p-1 rounded-lg transition ${img.meu_voto == 1 ? 'text-emerald-500' : 'text-slate-300 hover:text-emerald-400'}">
+                                    <i class="fa-solid fa-thumbs-up text-xs"></i> <span class="text-[9px] font-bold">${img.votos_positivos}</span>
+                                </button>
+                                <button type="button" onclick="voteImage(${img.id}, -1)" class="p-1 rounded-lg transition ${img.meu_voto == -1 ? 'text-rose-500' : 'text-slate-300 hover:text-rose-400'}">
+                                    <i class="fa-solid fa-thumbs-down text-xs"></i> <span class="text-[9px] font-bold">${img.votos_negativos}</span>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="w-full py-4 text-center opacity-30 text-[9px] font-black uppercase tracking-widest">Nenhuma imagem enviada</div>';
+                }
+            } catch (err) {}
+        }
+
+        async function uploadContestImage(input) {
+            const contestId = "<?php echo $info['concurso_id'] ?? ''; ?>";
+            const file = input.files[0];
+            if (!file || !contestId) return;
+            const formData = new FormData();
+            formData.append('imagem', file);
+            formData.append('concurso_id', contestId);
+            Toast.show("Enviando...", "info");
+            try {
+                const response = await fetch('api/api_concurso_imagem.php?action=upload', { method: 'POST', body: formData });
+                const res = await response.json();
+                if (res.success) { Toast.show("Sucesso!", "success"); loadContestImages(); }
+            } catch (err) {}
+        }
+
+        async function voteImage(imgId, voto) {
+            const contestId = "<?php echo $info['concurso_id'] ?? ''; ?>";
+            try {
+                await fetch('api/api_concurso_imagem.php?action=votar&concurso_id=' + contestId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imagem_id: imgId, voto: voto })
+                });
+                loadContestImages();
+            } catch (err) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGabaritoTabs();
+            const totalInput = document.querySelector('input[name="total_questoes"]');
+            if (totalInput) totalInput.addEventListener('input', renderGabaritoGrid);
+            loadContestImages();
+        });
     </script>
 
     <?php echo getFooter(); ?>
