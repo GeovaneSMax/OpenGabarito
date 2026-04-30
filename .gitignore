@@ -1,0 +1,33 @@
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.sql
+*.sql.gz
+
+# Logic and Config (Optional: you might want to commit the structure but ignore local changes)
+# includes/config.php
+
+# Web Server / Cache
+cache/*
+!cache/.gitkeep
+*.log
+.htaccess
+
+# User Uploads
+includes/uploads/*
+!includes/uploads/.gitkeep
+public_html/uploads/*
+!public_html/uploads/.gitkeep
+
+# System and IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.project
+.settings/
+
+# Dependencies
+vendor/
+node_modules/
