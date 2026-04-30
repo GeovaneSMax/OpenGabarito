@@ -122,7 +122,7 @@ Este projeto está sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para d
 
 Desenvolvido com ❤️ para a comunidade de concurseiros.
 - **Site**: [OpenGabarito.com.br](https://opengabarito.com.br)
-- **Comunidade**: [Link do WhatsApp/Discord se houver]
+- **Comunidade Telegram**: (https://t.me/+SRvNUFIdV9ZhMjVh)
 
 ---
 *OpenGabarito: Tecnologia aberta e transparente: por um mundo onde o conhecimento pertence a todos.*
