@@ -4,6 +4,10 @@ require_once __DIR__ . '/../../includes/auth.php';
 
 requireAdmin();
 
+// Conta edições pendentes
+$stmt_pendentes = $pdo->query("SELECT COUNT(*) FROM edicoes_log WHERE status = 'pendente'");
+$total_pendentes = $stmt_pendentes->fetchColumn();
+
 $concursos = $pdo->query("SELECT c.*, 
                          (SELECT COUNT(*) FROM cargos cg WHERE cg.concurso_id = c.id) as total_cargos,
                          (SELECT SUM((SELECT COUNT(*) FROM respostas_usuarios ru WHERE ru.cargo_id = cg2.id)) FROM cargos cg2 WHERE cg2.concurso_id = c.id) as total_participantes
@@ -32,12 +36,21 @@ $concursos = $pdo->query("SELECT c.*,
                 <p class="text-slate-400">Gestão centralizada de concursos e rankings</p>
             </div>
             <div class="flex gap-4">
+                <a href="review_edits.php" class="relative bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> Revisar Wiki
+                    <?php if ($total_pendentes > 0): ?>
+                        <span class="absolute -top-2 -right-2 bg-white text-amber-600 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                            <?php echo $total_pendentes; ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
                 <a href="suggestions.php" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-lightbulb"></i> Ver Sugestões
                 </a>
                 <a href="../index.php" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition">Voltar ao Site</a>
             </div>
         </div>
+
 
         <div class="grid grid-cols-1 gap-6">
             <?php foreach ($concursos as $c): ?>

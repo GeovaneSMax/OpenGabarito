@@ -408,16 +408,18 @@ function verificarEdicaoConcursoIA($dados) {
 /**
  * Registra o log de edição e ajusta a reputação do usuário.
  */
-function registrarEdicaoWiki($pdo, $usuario_id, $tipo, $id, $antigos, $novos, $score_ia) {
-    $stmt = $pdo->prepare("INSERT INTO edicoes_log (usuario_id, tipo_objeto, objeto_id, dados_anteriores, dados_novos, score_ia) 
-                           VALUES (?, ?, ?, ?, ?, ?)");
+function registrarEdicaoWiki($pdo, $usuario_id, $tipo, $id, $antigos, $novos, $score_ia, $status = 'pendente', $justificativa = '') {
+    $stmt = $pdo->prepare("INSERT INTO edicoes_log (usuario_id, tipo_objeto, objeto_id, dados_anteriores, dados_novos, score_ia, status, justificativa) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([
         $usuario_id, 
         $tipo, 
         $id, 
         json_encode($antigos), 
         json_encode($novos), 
-        $score_ia
+        $score_ia,
+        $status,
+        $justificativa
     ]);
 
     // Ajusta o Trust Score do usuário

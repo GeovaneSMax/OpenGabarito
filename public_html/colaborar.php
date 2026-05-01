@@ -80,82 +80,103 @@ if ($cargo_id) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         validateCSRF();
+        
+        // 0. Auditoria por IA antes de começar
+        $dados_auditoria = [
+            'nome_orgao' => $_POST['nome_orgao'] ?? '',
+            'banca' => $_POST['banca'] ?? '',
+            'nome_cargo' => $_POST['nome_cargo'] ?? '',
+            'total_questoes' => (int)($_POST['total_questoes'] ?? 0)
+        ];
+        
+        $analise_ia = verificarEdicaoConcursoIA($dados_auditoria);
+        if ($analise_ia['veredito'] === 'invalido') {
+            throw new Exception("A IA detectou dados inconsistentes: " . $analise_ia['motivo']);
+        }
+        $score_ia = $analise_ia['confianca'] ?? 50;
+
         $pdo->beginTransaction();
         
-        $nome_orgao = $_POST['nome_orgao'] ?? '';
-        $banca = $_POST['banca'] ?? '';
-        $nome_cargo = $_POST['nome_cargo'] ?? '';
-        $total_questoes = (int)$_POST['total_questoes'];
+        $nome_orgao = $dados_auditoria['nome_orgao'];
+        $banca = $dados_auditoria['banca'];
+        $nome_cargo = $dados_auditoria['nome_cargo'];
+        $total_questoes = $dados_auditoria['total_questoes'];
         
-        // 1. Salvar/Atualizar Concurso
-        $status = $_POST['status'] ?? 'aberto';
-        $data_prova = !empty($_POST['data_prova']) ? $_POST['data_prova'] : null;
-        $link_oficial = $_POST['link_oficial'] ?? '';
+        // Dados Antigos para Log (Snapshot)
+        $dados_anteriores = $info ? $info : [];
 
-        if ($info) {
-            $stmt = $pdo->prepare("UPDATE concursos SET nome_orgao = ?, banca = ?, data_prova = ?, link_oficial = ?, status = ? WHERE id = ?");
-            $stmt->execute([$nome_orgao, $banca, $data_prova, $link_oficial, $status, $info['concurso_id']]);
-            $concurso_id = $info['concurso_id'];
-        } else {
-            $stmt = $pdo->prepare("INSERT INTO concursos (nome_orgao, banca, data_prova, link_oficial, status) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$nome_orgao, $banca, $data_prova, $link_oficial, $status]);
-            $concurso_id = $pdo->lastInsertId();
-        }
+        // --- INÍCIO DA BLINDAGEM (FASE 2) ---
+        $trust_score = $_SESSION['trust_score'] ?? 0;
+        $pode_editar_direto = ($trust_score >= 80 || isAdmin() || $score_ia >= 95);
 
-        // 2. Salvar/Atualizar Cargo
-        $regras = [
-            'tem_discursiva' => isset($_POST['tem_discursiva']) ? 1 : 0,
-            'tem_titulos' => isset($_POST['tem_titulos']) ? 1 : 0,
-            'pontos_negativos' => isset($_POST['pontos_negativos']) ? 1 : 0,
-            'nota_padronizada' => isset($_POST['nota_padronizada']) ? 1 : 0,
-            'por_genero' => isset($_POST['por_genero']) ? 1 : 0
-        ];
-        $nota_corte = !empty($_POST['nota_corte_oficial']) ? $_POST['nota_corte_oficial'] : null;
-        $slug = 'ranking-pos-prova-' . slugify($nome_orgao) . '-' . slugify($nome_cargo);
+        if ($pode_editar_direto) {
+            // 1. Salvar/Atualizar Concurso
+            $status = $_POST['status'] ?? 'aberto';
+            $data_prova = !empty($_POST['data_prova']) ? $_POST['data_prova'] : null;
+            $link_oficial = $_POST['link_oficial'] ?? '';
 
-        if ($info) {
-            $stmt = $pdo->prepare("UPDATE cargos SET nome_cargo = ?, slug = ?, total_questoes = ?, tem_discursiva = ?, tem_titulos = ?, pontos_negativos = ?, nota_padronizada = ?, por_genero = ?, nota_corte_oficial = ?, editado_por = ? WHERE id = ?");
-            $stmt->execute([$nome_cargo, $slug, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id'], $cargo_id]);
-        } else {
-            $stmt = $pdo->prepare("INSERT INTO cargos (concurso_id, nome_cargo, slug, total_questoes, tem_discursiva, tem_titulos, pontos_negativos, nota_padronizada, por_genero, nota_corte_oficial, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$concurso_id, $nome_cargo, $slug, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id']]);
-            $cargo_id = $pdo->lastInsertId();
-        }
-
-        // 3. Salvar Modalidades
-        $modalidades = ['ampla', 'pcd', 'ppp', 'hipossuficiente', 'indigena', 'trans', 'quilombola'];
-        foreach ($modalidades as $mod) {
-            $inscritos = (int)($_POST["inscritos_$mod"] ?? 0);
-            $vagas = (int)($_POST["vagas_$mod"] ?? 0);
-            $vagas_2e = (int)($_POST["v2e_$mod"] ?? 0);
-            if ($inscritos > 0 || $vagas > 0) {
-                $stmt = $pdo->prepare("INSERT INTO cargo_modalidades (cargo_id, nome_modalidade, inscritos, vagas, vagas_2etapa) 
-                                       VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
-                                       inscritos = VALUES(inscritos), vagas = VALUES(vagas), vagas_2etapa = VALUES(vagas_2etapa)");
-                $stmt->execute([$cargo_id, $mod, $inscritos, $vagas, $vagas_2e]);
+            if ($info) {
+                $stmt = $pdo->prepare("UPDATE concursos SET nome_orgao = ?, banca = ?, data_prova = ?, link_oficial = ?, status = ? WHERE id = ?");
+                $stmt->execute([$nome_orgao, $banca, $data_prova, $link_oficial, $status, $info['concurso_id']]);
+                $concurso_id = $info['concurso_id'];
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO concursos (nome_orgao, banca, data_prova, link_oficial, status) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$nome_orgao, $banca, $data_prova, $link_oficial, $status]);
+                $concurso_id = $pdo->lastInsertId();
             }
-        }
 
-        // 4. Salvar Matérias
-        if (isset($_POST['materia_nome']) && is_array($_POST['materia_nome'])) {
-            $pdo->prepare("DELETE FROM cargo_materias WHERE cargo_id = ?")->execute([$cargo_id]);
-            $stmt = $pdo->prepare("INSERT INTO cargo_materias (cargo_id, nome_materia, sigla_materia, questao_inicio, questao_fim, peso, minimo_acertos, usuario_id) 
-                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            foreach ($_POST['materia_nome'] as $idx => $nome) {
-                if (empty($nome)) continue;
-                $sigla = $_POST['materia_sigla'][$idx] ?? substr($nome, 0, 3);
-                $inicio = (int)$_POST['materia_inicio'][$idx];
-                $fim = (int)$_POST['materia_fim'][$idx];
-                $peso = (float)($_POST['materia_peso'][$idx] ?? 1.0);
-                $minimo = (int)($_POST['materia_minimo'][$idx] ?? 0);
-                $stmt->execute([$cargo_id, $nome, $sigla, $inicio, $fim, $peso, $minimo, $_SESSION['usuario_id']]);
+            // 2. Salvar/Atualizar Cargo
+            $regras = [
+                'tem_discursiva' => isset($_POST['tem_discursiva']) ? 1 : 0,
+                'tem_titulos' => isset($_POST['tem_titulos']) ? 1 : 0,
+                'pontos_negativos' => isset($_POST['pontos_negativos']) ? 1 : 0,
+                'nota_padronizada' => isset($_POST['nota_padronizada']) ? 1 : 0,
+                'por_genero' => isset($_POST['por_genero']) ? 1 : 0
+            ];
+            $nota_corte = !empty($_POST['nota_corte_oficial']) ? $_POST['nota_corte_oficial'] : null;
+            $slug = 'ranking-pos-prova-' . slugify($nome_orgao) . '-' . slugify($nome_cargo);
+
+            if ($info) {
+                $stmt = $pdo->prepare("UPDATE cargos SET nome_cargo = ?, slug = ?, total_questoes = ?, tem_discursiva = ?, tem_titulos = ?, pontos_negativos = ?, nota_padronizada = ?, por_genero = ?, nota_corte_oficial = ?, editado_por = ? WHERE id = ?");
+                $stmt->execute([$nome_cargo, $slug, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id'], $cargo_id]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO cargos (concurso_id, nome_cargo, slug, total_questoes, tem_discursiva, tem_titulos, pontos_negativos, nota_padronizada, por_genero, nota_corte_oficial, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$concurso_id, $nome_cargo, $slug, $total_questoes, $regras['tem_discursiva'], $regras['tem_titulos'], $regras['pontos_negativos'], $regras['nota_padronizada'], $regras['por_genero'], $nota_corte, $_SESSION['usuario_id']]);
+                $cargo_id = $pdo->lastInsertId();
             }
-        }
 
-        // 5. Salvar Gabarito Oficial
-        if (!empty($_POST['gabarito_oficial_json'])) {
-            $trust_score = $_SESSION['trust_score'] ?? 0;
-            if ($trust_score >= 80 || isAdmin()) {
+            // 3. Salvar Modalidades
+            $modalidades = ['ampla', 'pcd', 'ppp', 'hipossuficiente', 'indigena', 'trans', 'quilombola'];
+            foreach ($modalidades as $mod) {
+                $inscritos = (int)($_POST["inscritos_$mod"] ?? 0);
+                $vagas = (int)($_POST["vagas_$mod"] ?? 0);
+                $vagas_2e = (int)($_POST["v2e_$mod"] ?? 0);
+                if ($inscritos > 0 || $vagas > 0) {
+                    $stmt = $pdo->prepare("INSERT INTO cargo_modalidades (cargo_id, nome_modalidade, inscritos, vagas, vagas_2etapa) 
+                                           VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
+                                           inscritos = VALUES(inscritos), vagas = VALUES(vagas), vagas_2etapa = VALUES(vagas_2etapa)");
+                    $stmt->execute([$cargo_id, $mod, $inscritos, $vagas, $vagas_2e]);
+                }
+            }
+
+            // 4. Salvar Matérias
+            if (isset($_POST['materia_nome']) && is_array($_POST['materia_nome'])) {
+                $pdo->prepare("DELETE FROM cargo_materias WHERE cargo_id = ?")->execute([$cargo_id]);
+                $stmt = $pdo->prepare("INSERT INTO cargo_materias (cargo_id, nome_materia, sigla_materia, questao_inicio, questao_fim, peso, minimo_acertos, usuario_id) 
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                foreach ($_POST['materia_nome'] as $idx => $nome) {
+                    if (empty($nome)) continue;
+                    $sigla = $_POST['materia_sigla'][$idx] ?? substr($nome, 0, 3);
+                    $inicio = (int)$_POST['materia_inicio'][$idx];
+                    $fim = (int)$_POST['materia_fim'][$idx];
+                    $peso = (float)($_POST['materia_peso'][$idx] ?? 1.0);
+                    $minimo = (int)($_POST['materia_minimo'][$idx] ?? 0);
+                    $stmt->execute([$cargo_id, $nome, $sigla, $inicio, $fim, $peso, $minimo, $_SESSION['usuario_id']]);
+                }
+            }
+
+            // 5. Salvar Gabarito Oficial (Incluso na blindagem)
+            if (!empty($_POST['gabarito_oficial_json'])) {
                 $all_versions = json_decode($_POST['gabarito_oficial_json'], true);
                 if (is_array($all_versions)) {
                     foreach ($all_versions as $versao => $respostas) {
@@ -166,17 +187,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
+
+            atualizarConsenso($pdo, $cargo_id);
         }
+        // --- FIM DA BLINDAGEM ---
 
-        atualizarConsenso($pdo, $cargo_id);
-
-        // 7. Log da Contribuição
-        $trust_score = $_SESSION['trust_score'] ?? 0;
-        $status_edicao = ($trust_score >= 80 || isAdmin()) ? 'aprovado' : 'pendente';
+        // 7. Log da Contribuição e Atualização de Trust Score
+        $status_edicao = $pode_editar_direto ? 'aprovado' : 'pendente';
         $justificativa = $_POST['justificativa'] ?? '';
-        $stmt = $pdo->prepare("INSERT INTO edicoes_log (usuario_id, tipo_objeto, objeto_id, dados_novos, score_ia, status, justificativa) 
-                               VALUES (?, 'cargo', ?, ?, ?, ?, ?)");
-        $stmt->execute([$_SESSION['usuario_id'], $cargo_id, json_encode($_POST), 100, $status_edicao, $justificativa]);
+        
+        registrarEdicaoWiki(
+            $pdo, 
+            $_SESSION['usuario_id'], 
+            'cargo', 
+            $cargo_id, 
+            $dados_anteriores, 
+            $_POST, 
+            $score_ia, 
+            $status_edicao, 
+            $justificativa
+        );
 
         $pdo->commit();
         $sucesso = "Wiki atualizada com sucesso!";
