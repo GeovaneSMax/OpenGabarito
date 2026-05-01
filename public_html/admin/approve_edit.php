@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $inicio = (int)$dados['materia_inicio'][$idx];
                     $fim = (int)$dados['materia_fim'][$idx];
                     $peso = (float)($dados['materia_peso'][$idx] ?? 1.0);
-                    $minimo = (int)$dados['materia_minimo'][$idx] ?? 0);
+                    $minimo = (int)($dados['materia_minimo'][$idx] ?? 0);
                     $stmt->execute([$cargo_id, $nome, $sigla, $inicio, $fim, $peso, $minimo, $log['usuario_id']]);
                 }
             }
