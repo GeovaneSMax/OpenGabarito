@@ -64,18 +64,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="assets/js/toasts.js"></script>
     <style>
         body { font-family: 'Outfit', sans-serif; }
-        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.5); }
+        .glass-panel { background: #ffffff; border: 1px solid #e2e8f0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-600 min-h-screen pb-20">
     
-    <nav class="glass-panel sticky top-0 z-50 mb-10 border-b border-slate-100/50">
+    <nav class="glass-panel sticky top-0 z-50 mb-10 border-b border-slate-200">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <a href="index.php" class="flex items-center gap-3">
                 <?php echo getLogoSVG(36); ?>
-                <span class="font-black text-slate-900 tracking-tighter text-xl">Open<span class="text-indigo-600">Gabarito</span></span>
+                <span class="font-bold text-slate-900 tracking-tight text-xl">Open<span class="text-primary-600">Gabarito</span></span>
             </a>
             <a href="index.php" class="text-xs font-black text-slate-400 hover:text-slate-900 transition flex items-center gap-2 uppercase tracking-widest">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
@@ -86,38 +86,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main class="max-w-3xl mx-auto px-4 py-12">
         <div class="animate-fade-in space-y-10">
             <!-- Cabeçalho -->
-            <!-- Cabeçalho -->
             <div class="text-center">
                 <h1 class="text-5xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">Novo Concurso</h1>
                 <p class="text-slate-500 font-medium leading-relaxed">Cadastre um novo concurso e cargo na plataforma para iniciar o ranking.</p>
             </div>
 
             <!-- Mágica IA (Centralizada) -->
-            <div class="bg-indigo-50/50 rounded-[40px] p-10 border-2 border-indigo-100 border-dashed relative overflow-hidden">
+            <div class="bg-white rounded-[40px] p-10 border border-slate-200 shadow-sm relative overflow-hidden">
                 <div class="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
                     <div class="flex items-center gap-6">
-                        <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl shadow-xl shadow-indigo-500/20">
+                        <div class="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg shadow-primary-500/10">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
                         <div>
                             <h3 class="text-slate-900 font-black text-xl mb-1">Mágica IA</h3>
-                            <p class="text-indigo-600 text-[10px] uppercase font-black tracking-[0.2em]">Importar do PDF do Edital</p>
+                            <p class="text-primary-600 text-[10px] uppercase font-black tracking-[0.2em]">Importar do PDF do Edital</p>
                         </div>
                     </div>
-                    <button type="button" onclick="document.getElementById('edital-upload').click()" id="ai-import-btn" class="w-full md:w-auto bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 px-8 py-5 rounded-[24px] text-xs font-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-indigo-500/5 border border-indigo-100">
+                    <button type="button" onclick="document.getElementById('edital-upload').click()" id="ai-import-btn" class="w-full md:w-auto bg-primary-600 hover:bg-primary-500 text-white px-8 py-5 rounded-[24px] text-xs font-black transition-all flex items-center justify-center gap-3 shadow-lg shadow-primary-500/20">
                         <i class="fa-solid fa-file-pdf"></i> SELECIONAR EDITAL
                     </button>
                     <input type="file" id="edital-upload" accept="application/pdf" class="hidden" onchange="handleEditalUpload(this)">
                 </div>
 
                 <!-- Status da IA -->
-                <div id="ai-status-bar" class="hidden mt-8 bg-white/80 backdrop-blur-md rounded-3xl p-6 border border-emerald-100 shadow-sm">
+                <div id="ai-status-bar" class="hidden mt-8 bg-slate-50 rounded-3xl p-6 border border-slate-200 shadow-sm">
                     <div class="flex items-center justify-between mb-3">
-                        <span id="ai-status-text" class="text-emerald-600 text-[10px] font-black uppercase tracking-widest">Iniciando análise...</span>
-                        <span id="ai-status-percent" class="text-emerald-600 text-[10px] font-black">0%</span>
+                        <span id="ai-status-text" class="text-slate-600 text-[10px] font-black uppercase tracking-widest">Iniciando análise...</span>
+                        <span id="ai-status-percent" class="text-slate-600 text-[10px] font-black">0%</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">
-                        <div id="ai-status-progress" class="bg-emerald-500 h-full w-0 transition-all duration-700 ease-out"></div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div id="ai-status-progress" class="bg-primary-500 h-full w-0 transition-all duration-700 ease-out"></div>
                     </div>
                 </div>
             </div>
@@ -134,52 +133,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <!-- Aviso de Beta/IA -->
-            <div class="bg-amber-50 rounded-[32px] p-8 border border-amber-100 shadow-sm">
+            <div class="bg-slate-50 rounded-[32px] p-8 border border-slate-200 shadow-sm">
                 <div class="flex items-center gap-6">
-                    <div class="w-14 h-14 bg-white text-amber-500 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-amber-100">
+                    <div class="w-14 h-14 bg-white text-slate-500 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-slate-200">
                         <i class="fa-solid fa-flask-vial"></i>
                     </div>
                     <div>
-                        <h4 class="text-amber-700 text-[11px] font-black uppercase tracking-widest mb-1">IA em Fase de Testes</h4>
-                        <p class="text-amber-600/80 text-xs font-medium leading-relaxed">A tecnologia de extração de editais via PDF utiliza IA experimental. Revise cuidadosamente todos os campos antes de salvar.</p>
+                        <h4 class="text-slate-700 text-[11px] font-black uppercase tracking-widest mb-1">IA em Fase de Testes</h4>
+                        <p class="text-slate-600/80 text-xs font-medium leading-relaxed">A tecnologia de extração de editais via PDF utiliza IA experimental. Revise cuidadosamente todos os campos antes de salvar.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-[40px] p-8 md:p-12 shadow-2xl shadow-indigo-500/5 border border-slate-100">
+            <div class="bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-slate-200">
                 <form method="POST" class="space-y-10">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="md:col-span-2">
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Órgão Público</label>
-                            <input type="text" name="nome_orgao" required placeholder="Ex: Correios, PF, INSS" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold">
+                            <input type="text" name="nome_orgao" required placeholder="Ex: Correios, PF, INSS" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none transition-all font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Banca Organizadora</label>
-                            <input type="text" name="banca" required placeholder="Ex: FGV, Cebraspe" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold">
+                            <input type="text" name="banca" required placeholder="Ex: FGV, Cebraspe" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none transition-all font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Nome do Cargo</label>
-                            <input type="text" name="nome_cargo" required placeholder="Ex: Técnico Administrativo" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold">
+                            <input type="text" name="nome_cargo" required placeholder="Ex: Técnico Administrativo" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none transition-all font-bold">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Total de Vagas</label>
-                            <input type="number" name="vagas" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none font-bold">
+                            <input type="number" name="vagas" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Inscritos Estimados</label>
-                            <input type="number" name="inscritos" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none font-bold">
+                            <input type="number" name="inscritos" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Nº de Questões</label>
-                            <input type="number" name="total_questoes" value="60" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none font-bold">
+                            <input type="number" name="total_questoes" value="60" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none font-bold">
                         </div>
                     </div>
 
                     <div class="pt-8 border-t border-slate-100">
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-6 rounded-[32px] transition-all shadow-xl shadow-indigo-500/20 text-lg flex items-center justify-center gap-3 uppercase tracking-widest">
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-black py-6 rounded-[32px] transition-all shadow-lg shadow-primary-500/20 text-lg flex items-center justify-center gap-3 uppercase tracking-widest">
                             <i class="fa-solid fa-plus-circle"></i> Cadastrar Concurso & Cargo
                         </button>
                     </div>

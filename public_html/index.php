@@ -77,8 +77,9 @@ try {
             theme: {
                 extend: {
                     colors: {
-                        primary: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' }, // Indigo
-                        success: { 400: '#34d399', 500: '#10b981', 600: '#059669' }, // Emerald
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }, // Blue
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' }, // Green
+                        danger: { 500: '#ef4444', 600: '#dc2626' }, // Red
                         slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' }
                     },
                     fontFamily: {
@@ -102,120 +103,12 @@ try {
         body { font-family: 'Outfit', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         html, body { max-width: 100vw; overflow-x: hidden; }
-        .glass-panel { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
-        .mesh-gradient { background-color: #ffffff; background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, hsla(253,16%,7%,0) 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, hsla(225,39%,30%,0) 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, hsla(339,49%,30%,0) 50%); }
+        .glass-panel { background: #ffffff; border-bottom: 1px solid #e2e8f0; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-600 antialiased min-h-screen flex flex-col selection:bg-primary-500 selection:text-white w-full overflow-x-hidden">
 
-    <nav class="glass-panel sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <a href="index.php" class="flex items-center gap-4 group">
-                    <div class="h-12 w-12 group-hover:scale-110 transition-all duration-500">
-                        <?php echo getLogoSVG(48); ?>
-                    </div>
-                    <div>
-                        <span class="font-black text-2xl tracking-tighter text-slate-900 block leading-none">Open<span class="text-indigo-600">Gabarito</span></span>
-                        <span class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black uppercase tracking-widest border border-emerald-100 shadow-sm inline-block mt-1">Colaborativo</span>
-                    </div>
-                </a>
-                
-                <div class="hidden md:flex items-center space-x-1">
-                    <a href="index.php" class="text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 rounded-lg bg-slate-100 transition">Rankings</a>
-                    <a href="transparencia.php" class="text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 transition">Transparência</a>
-                    <?php if (isAdmin()): ?>
-                        <a href="admin/dashboard.php" class="text-rose-600 hover:text-rose-500 font-black px-4 py-2 transition flex items-center gap-2 text-xs uppercase tracking-widest">
-                            <i class="fa-solid fa-screwdriver-wrench"></i> Admin
-                        </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="flex items-center gap-3 sm:gap-6">
-                    <div class="flex items-center gap-4 border-l border-slate-200 pl-6 ml-2">
-                        <?php if (isLoggedIn()): ?>
-                            <a href="minha_area.php" class="flex items-center gap-3 group">
-                                <div class="hidden md:flex flex-col items-end leading-tight">
-                                    <span class="text-[9px] text-slate-400 font-black uppercase tracking-widest">Minha Área</span>
-                                    <span class="text-xs text-slate-900 font-bold group-hover:text-indigo-600 transition"><?php echo explode(' ', $_SESSION['usuario_nome'])[0]; ?></span>
-                                </div>
-                                <div class="w-9 h-9 rounded-full bg-white border-2 border-slate-200 overflow-hidden shadow-sm group-hover:border-indigo-500 transition-all">
-                                    <?php 
-                                    $stmt_nav = $pdo->prepare("SELECT foto_perfil FROM usuarios WHERE id = ?");
-                                    $stmt_nav->execute([$_SESSION['usuario_id']]);
-                                    $foto_nav = $stmt_nav->fetchColumn();
-                                    if ($foto_nav): 
-                                    ?>
-                                        <img src="<?php echo $foto_nav; ?>" class="w-full h-full object-cover">
-                                    <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-[10px] font-black">
-                                            <?php echo substr($_SESSION['usuario_nome'], 0, 1); ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </a>
-                            <a href="logout.php" class="text-slate-500 hover:text-rose-400 transition" title="Sair">
-                                <i class="fa-solid fa-power-off text-sm"></i>
-                            </a>
-                        <?php else: ?>
-                            <a href="login.php" class="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition">Entrar</a>
-                            <a href="login.php?action=register" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition shadow-lg shadow-indigo-500/20">Cadastrar</a>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Mobile Menu Button -->
-                    <button id="mobile-menu-btn" class="md:hidden text-slate-500 hover:text-slate-900 p-2">
-                        <i class="fa-solid fa-bars text-xl"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobile Menu Container -->
-        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white/95 backdrop-blur-xl">
-            <div class="px-4 pt-2 pb-6 space-y-1">
-                <a href="index.php" class="block px-3 py-4 text-base font-medium text-slate-900 border-b border-primary-500">Ranking</a>
-                <a href="transparencia.php" class="block px-3 py-4 text-base font-medium text-slate-500 hover:text-slate-900">Transparência</a>
-                <a href="#global-stats" class="block px-3 py-4 text-base font-medium text-slate-500 hover:text-slate-900" onclick="toggleMenu()">Estatísticas</a>
-                <?php if (isAdmin()): ?>
-                    <a href="admin/dashboard.php" class="block px-3 py-4 text-base font-black text-rose-600 flex items-center gap-2">
-                        <i class="fa-solid fa-screwdriver-wrench"></i> Painel Admin
-                    </a>
-                <?php endif; ?>
-                
-                <div class="pt-4 border-t border-slate-100 mt-4">
-                    <a href="colaborar.php" class="flex items-center gap-3 px-3 py-4 text-indigo-600 font-bold">
-                        <i class="fa-solid fa-plus-circle"></i> Adicionar Concurso
-                    </a>
-                    <?php if (isLoggedIn()): ?>
-                        <a href="minha_area.php" class="block px-3 py-4 text-base font-medium text-slate-600">Minha Área</a>
-                        <a href="logout.php" class="block px-3 py-4 text-base font-medium text-red-500">Sair</a>
-                    <?php else: ?>
-                        <a href="login.php" class="block px-3 py-4 text-base font-medium text-slate-600">Entrar</a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <script>
-        const menuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        function toggleMenu() {
-            mobileMenu.classList.toggle('hidden');
-            const icon = menuBtn.querySelector('i');
-            if (mobileMenu.classList.contains('hidden')) {
-                icon.classList.remove('fa-xmark');
-                icon.classList.add('fa-bars');
-            } else {
-                icon.classList.remove('fa-bars');
-                icon.classList.add('fa-xmark');
-            }
-        }
-        
-        menuBtn.addEventListener('click', toggleMenu);
-    </script>
+    <?php echo getNav(); ?>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
         <!-- Hero Colaborativo: Manifesto + Moderadores -->
@@ -224,7 +117,7 @@ try {
             <!-- Lado Esquerdo: Manifesto -->
             <div class="md:col-span-7 text-left">
                 <div class="flex flex-wrap items-center gap-2 mb-4">
-                    <div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border border-indigo-200">
+                    <div class="inline-flex items-center gap-2 bg-primary-100 text-primary-600 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border border-primary-200">
                         <i class="fa-solid fa-hand-holding-heart"></i> 100% Gratuito e Colaborativo
                     </div>
                     <a href="https://github.com/GeovaneSMax/OpenGabarito" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border border-slate-800 hover:bg-slate-700 transition-all">
@@ -232,13 +125,13 @@ try {
                     </a>
                 </div>
                 <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">
-                    A união faz o <span class="text-indigo-600">Ranking.</span>
+                    A união faz o <span class="text-primary-600">Ranking.</span>
                 </h1>
                 <p class="text-base text-slate-500 max-w-xl leading-relaxed mb-8">
                     Chega de pagar caro. O OpenGabarito é uma wiki feita por estudantes para estudantes. Ajuda mútua com o poder da IA.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-start gap-3">
-                    <a href="novo_gabarito.php" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-500/10">
+                    <a href="novo_gabarito.php" class="w-full sm:w-auto bg-primary-600 hover:bg-primary-500 text-white font-bold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-primary-500/10">
                         <i class="fa-solid fa-paper-plane"></i> Enviar Gabarito
                     </a>
                     <a href="colaborar.php" class="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-900 font-bold px-6 py-3 rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-2 text-sm shadow-sm">
@@ -249,9 +142,9 @@ try {
 
             <!-- Lado Direito: Heróis da Comunidade (Moderadores) -->
             <div class="md:col-span-5">
-                <div class="bg-white border border-slate-100 rounded-[40px] p-8 shadow-2xl shadow-indigo-500/5 relative overflow-hidden group">
+                <div class="bg-white border border-slate-100 rounded-[40px] p-8 shadow-2xl shadow-primary-500/5 relative overflow-hidden group">
                     <div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <i class="fa-solid fa-trophy text-8xl text-indigo-600"></i>
+                        <i class="fa-solid fa-trophy text-8xl text-primary-600"></i>
                     </div>
                     <div class="flex items-center justify-between mb-8">
                         <span class="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">Heróis da Comunidade</span>
@@ -263,14 +156,14 @@ try {
                     <div class="space-y-3">
                         <?php 
                         // 1. Busca os top 3 globais
-                        $stmt = $pdo->query("SELECT id, nome, trust_score, foto_perfil FROM usuarios WHERE trust_score > 0 ORDER BY trust_score DESC LIMIT 3");
+                        $stmt = $pdo->query("SELECT id, nickname as nome, trust_score, foto_perfil FROM usuarios WHERE trust_score > 0 ORDER BY trust_score DESC LIMIT 3");
                         $top_mods = $stmt->fetchAll();
                         $ids_exibidos = array_column($top_mods, 'id');
                         
                         foreach ($top_mods as $m): 
                             $foto_m = $m['foto_perfil'] ?? null;
                         ?>
-                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all">
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary-200 transition-all">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full bg-white overflow-hidden flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200 uppercase">
                                     <?php if ($foto_m): ?>
@@ -284,23 +177,23 @@ try {
                                     <div class="text-[8px] text-slate-500 uppercase font-black">Score Confiança</div>
                                 </div>
                             </div>
-                            <div class="text-xs font-black text-indigo-400"><?php echo $m['trust_score']; ?></div>
+                            <div class="text-xs font-black text-primary-400"><?php echo $m['trust_score']; ?></div>
                         </div>
                         <?php endforeach; ?>
 
                         <?php 
                         // 2. Se o usuário logado NÃO está no top 3, mostra ele aqui embaixo
                         if (isLoggedIn() && !in_array($_SESSION['usuario_id'], $ids_exibidos)):
-                            $stmt = $pdo->prepare("SELECT nome, trust_score, foto_perfil FROM usuarios WHERE id = ?");
+                            $stmt = $pdo->prepare("SELECT nickname as nome, trust_score, foto_perfil FROM usuarios WHERE id = ?");
                             $stmt->execute([$_SESSION['usuario_id']]);
                             $me = $stmt->fetch();
                             if ($me && $me['trust_score'] > 0):
                                 $foto_me = $me['foto_perfil'] ?? null;
                         ?>
                         <div class="mt-4 pt-4 border-t border-slate-100">
-                            <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
+                            <div class="flex items-center justify-between p-3 bg-primary-50 rounded-2xl border border-primary-100">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-indigo-600 overflow-hidden flex items-center justify-center text-[10px] font-black text-white border border-indigo-400 uppercase">
+                                    <div class="w-8 h-8 rounded-full bg-primary-600 overflow-hidden flex items-center justify-center text-[10px] font-black text-white border border-primary-400 uppercase">
                                         <?php if ($foto_me): ?>
                                             <img src="<?php echo $foto_me; ?>" class="w-full h-full object-cover">
                                         <?php else: ?>
@@ -309,10 +202,10 @@ try {
                                     </div>
                                     <div>
                                         <div class="text-xs font-bold text-slate-900"><?php echo htmlspecialchars($me['nome']); ?> (Você)</div>
-                                        <div class="text-[8px] text-indigo-600 uppercase font-black">Sua Pontuação Wiki</div>
+                                        <div class="text-[8px] text-primary-600 uppercase font-black">Sua Pontuação Wiki</div>
                                     </div>
                                 </div>
-                                <div class="text-xs font-black text-indigo-600"><?php echo $me['trust_score']; ?></div>
+                                <div class="text-xs font-black text-primary-600"><?php echo $me['trust_score']; ?></div>
                             </div>
                         </div>
                         <?php endif; endif; ?>
@@ -328,9 +221,9 @@ try {
         <?php if (isLoggedIn()): ?>
         <!-- Seção: Minha Área (Dashboard Rápido) -->
         <div class="mb-20 animate-fade-in">
-            <div class="bg-white rounded-[40px] p-8 border border-indigo-100 relative overflow-hidden shadow-2xl shadow-indigo-500/5">
+            <div class="bg-white rounded-[40px] p-8 border border-primary-100 relative overflow-hidden shadow-2xl shadow-primary-500/5">
                 <div class="absolute top-0 right-0 p-12 opacity-5">
-                    <i class="fa-solid fa-user-gear text-9xl text-indigo-600"></i>
+                    <i class="fa-solid fa-user-gear text-9xl text-primary-600"></i>
                 </div>
                 
                 <div class="flex flex-col md:flex-row items-center gap-10 relative z-10">
@@ -338,7 +231,7 @@ try {
                     <div class="relative group">
                         <div class="w-32 h-32 rounded-[32px] border-4 border-white overflow-hidden bg-slate-50 shadow-xl relative transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
                             <?php 
-                            $stmt = $pdo->prepare("SELECT foto_perfil, trust_score FROM usuarios WHERE id = ?");
+                            $stmt = $pdo->prepare("SELECT foto_perfil, trust_score, nickname FROM usuarios WHERE id = ?");
                             $stmt->execute([$_SESSION['usuario_id']]);
                             $userData = $stmt->fetch();
                             $foto = $userData['foto_perfil'] ?? 'https://www.gravatar.com/avatar/'.md5($_SESSION['usuario_email']).'?d=mp';
@@ -347,7 +240,7 @@ try {
                         </div>
                         <form action="handle_avatar.php" method="POST" enctype="multipart/form-data" id="avatar-form" class="absolute -bottom-2 -right-2">
                             <?php echo csrfInput(); ?>
-                            <label for="avatar-input" class="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 rounded-2xl flex items-center justify-center cursor-pointer shadow-xl transition-all hover:scale-110 border-2 border-white" title="Trocar foto">
+                            <label for="avatar-input" class="w-10 h-10 bg-primary-600 hover:bg-primary-500 rounded-2xl flex items-center justify-center cursor-pointer shadow-xl transition-all hover:scale-110 border-2 border-white" title="Trocar foto">
                                 <i class="fa-solid fa-camera text-sm text-white"></i>
                             </label>
                             <input type="file" name="avatar" id="avatar-input" class="hidden" accept="image/*" onchange="document.getElementById('avatar-form').submit()">
@@ -355,14 +248,14 @@ try {
                     </div>
 
                     <div class="text-center md:text-left flex-grow">
-                        <h2 class="text-3xl font-black text-slate-900 mb-2 tracking-tight">Olá, <?php echo explode(' ', $_SESSION['usuario_nome'])[0]; ?>! 👋</h2>
+                        <h2 class="text-3xl font-black text-slate-900 mb-2 tracking-tight">Olá, <?php echo htmlspecialchars($userData['nickname']); ?>! 👋</h2>
                         <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4">
                             <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100 flex items-center gap-2 shadow-sm">
                                 <i class="fa-solid fa-star text-amber-500"></i> Trust Score: <span class="text-amber-600"><?php echo $userData['trust_score']; ?></span>
                             </span>
-                            <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-2 shadow-sm">
-                                <i class="fa-solid fa-check-double text-emerald-500"></i> Gabaritos: 
-                                <span class="text-emerald-700">
+                            <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-success-50 px-4 py-2 rounded-2xl border border-success-100 flex items-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-check-double text-success-500"></i> Gabaritos: 
+                                <span class="text-success-700">
                                     <?php 
                                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM respostas_usuarios WHERE usuario_id = ? AND deleted_at IS NULL");
                                     $stmt->execute([$_SESSION['usuario_id']]);
@@ -374,7 +267,7 @@ try {
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <a href="minha_area.php" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black px-8 py-4 rounded-2xl transition-all shadow-xl shadow-indigo-500/20 flex items-center gap-3 uppercase tracking-widest">
+                        <a href="minha_area.php" class="bg-primary-600 hover:bg-primary-500 text-white text-xs font-black px-8 py-4 rounded-2xl transition-all shadow-xl shadow-primary-500/20 flex items-center gap-3 uppercase tracking-widest">
                             <i class="fa-solid fa-chart-line"></i> Painel de Desempenho
                         </a>
                     </div>
@@ -385,27 +278,27 @@ try {
 
         <!-- Seção: Nossa Missão -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-            <div class="bg-white border border-slate-100 rounded-[32px] p-10 relative overflow-hidden group hover:border-rose-200 transition-all shadow-xl shadow-slate-200/20">
+            <div class="bg-white border border-slate-100 rounded-[32px] p-10 relative overflow-hidden group hover:border-danger-200 transition-all shadow-xl shadow-slate-200/20">
                 <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <i class="fa-solid fa-ban text-8xl text-rose-500"></i>
+                    <i class="fa-solid fa-ban text-8xl text-danger-500"></i>
                 </div>
                 <h3 class="text-slate-900 font-black text-xl mb-4 tracking-tight">Preços Abusivos? Nunca.</h3>
                 <p class="text-sm text-slate-500 leading-relaxed font-medium">
                     Nascemos para acabar com o lucro em cima do esforço do concurseiro. Aqui, a informação é livre e o acesso ao ranking é (e sempre será) gratuito.
                 </p>
             </div>
-            <div class="bg-white border border-slate-100 rounded-[32px] p-10 relative overflow-hidden group hover:border-indigo-200 transition-all shadow-xl shadow-slate-200/20">
+            <div class="bg-white border border-slate-100 rounded-[32px] p-10 relative overflow-hidden group hover:border-primary-200 transition-all shadow-xl shadow-slate-200/20">
                 <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <i class="fa-solid fa-users-rays text-8xl text-indigo-500"></i>
+                    <i class="fa-solid fa-users-rays text-8xl text-primary-500"></i>
                 </div>
                 <h3 class="text-slate-900 font-black text-xl mb-4 tracking-tight">Inteligência Coletiva</h3>
                 <p class="text-sm text-slate-500 leading-relaxed font-medium">
                     Cada gabarito enviado ajuda a comunidade. Nossa IA auditada pela Groq (Llama 3.3) processa os dados para te dar a visão mais real do cenário.
                 </p>
             </div>
-            <div class="bg-white border border-slate-100 rounded-[32px] p-10 relative overflow-hidden group hover:border-emerald-200 transition-all shadow-xl shadow-slate-200/20">
+            <div class="bg-white border border-slate-100 rounded-[32px] p-10 relative overflow-hidden group hover:border-success-200 transition-all shadow-xl shadow-slate-200/20">
                 <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <i class="fa-solid fa-shield-halved text-8xl text-emerald-500"></i>
+                    <i class="fa-solid fa-shield-halved text-8xl text-success-500"></i>
                 </div>
                 <h3 class="text-slate-900 font-black text-xl mb-4 tracking-tight">Wiki de Elite</h3>
                 <p class="text-sm text-slate-500 leading-relaxed font-medium">
@@ -417,7 +310,7 @@ try {
         <!-- Cards de Estatísticas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-xl shadow-slate-200/20 flex items-center gap-6">
-                <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                <div class="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
                     <i class="fa-solid fa-database"></i>
                 </div>
                 <div>
@@ -426,7 +319,7 @@ try {
                 </div>
             </div>
             <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-xl shadow-slate-200/20 flex items-center gap-6">
-                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                <div class="w-14 h-14 bg-success-50 text-success-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
                     <i class="fa-regular fa-file-lines"></i>
                 </div>
                 <div>
@@ -453,15 +346,15 @@ try {
                 </div>
                 <div class="w-full md:w-[500px] relative group">
                     <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-magnifying-glass text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
+                        <i class="fa-solid fa-magnifying-glass text-slate-300 group-focus-within:text-primary-500 transition-colors"></i>
                     </div>
-                    <input type="text" id="search-contest" class="block w-full pl-14 pr-6 py-5 bg-white border-2 border-slate-100 rounded-[28px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all shadow-xl shadow-slate-200/20 font-bold text-lg" placeholder="Qual concurso você está buscando?">
+                    <input type="text" id="search-contest" class="block w-full pl-14 pr-6 py-5 bg-white border-2 border-slate-100 rounded-[28px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-8 focus:ring-primary-500/5 focus:border-primary-500 transition-all shadow-xl shadow-slate-200/20 font-bold text-lg" placeholder="Qual concurso você está buscando?">
                 </div>
             </div>
 
             <!-- Filtros Rápidos -->
             <div id="filter-bar" class="flex gap-2 overflow-x-auto pb-4 custom-scrollbar">
-                <button onclick="applyFilter('populares')" class="filter-btn active bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20 border border-indigo-600">
+                <button onclick="applyFilter('populares')" class="filter-btn active bg-primary-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-primary-500/20 border border-primary-600">
                     <i class="fa-solid fa-fire mr-2"></i> Mais Populares
                 </button>
                 <button onclick="applyFilter('recentes')" class="filter-btn bg-white text-slate-500 hover:bg-slate-50 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-100">
@@ -521,8 +414,8 @@ try {
                             </td>
                             <td class="hidden sm:table-cell px-8 py-6 whitespace-nowrap text-[11px] font-black uppercase tracking-widest">
                                 <?php if ($c['status'] == 'aberto'): ?>
-                                    <span class="text-emerald-600 flex items-center gap-2">
-                                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    <span class="text-success-600 flex items-center gap-2">
+                                        <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
                                         Aberto
                                     </span>
                                 <?php else: ?>
@@ -555,7 +448,7 @@ try {
                                         }
                                     }
                                 ?>
-                                <span class="font-mono font-bold text-emerald-600"><?php echo is_numeric($pnc) ? number_format($pnc, 1) : $pnc; ?></span>
+                                <span class="font-mono font-bold text-success-600"><?php echo is_numeric($pnc) ? number_format($pnc, 1) : $pnc; ?></span>
                             </td>
                             <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
                                 <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-slate-900 transition-colors"></i>
@@ -579,10 +472,10 @@ try {
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
                 <?php foreach ($top_mods as $idx => $mod): 
-                    $colors = ['from-amber-400 to-orange-500', 'from-slate-300 to-slate-400', 'from-amber-700 to-amber-900', 'from-indigo-500 to-blue-600', 'from-emerald-500 to-teal-600'];
+                    $colors = ['from-primary-400 to-primary-500', 'from-slate-300 to-slate-400', 'from-primary-600 to-primary-700', 'from-primary-500 to-blue-600', 'from-success-500 to-success-600'];
                     $color = $colors[$idx] ?? 'from-slate-700 to-slate-800';
                 ?>
-                    <div class="bg-white border border-slate-200 p-6 rounded-3xl flex flex-col items-center text-center group hover:border-indigo-500 transition-all duration-300 shadow-lg">
+                    <div class="bg-white border border-slate-200 p-6 rounded-3xl flex flex-col items-center text-center group hover:border-primary-500 transition-all duration-300 shadow-lg">
                         <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-white text-xl font-bold mb-4 shadow-sm group-hover:scale-110 transition-transform overflow-hidden border-2 border-white">
                             <?php if (!empty($mod['foto_perfil'])): ?>
                                 <img src="<?php echo $mod['foto_perfil']; ?>" class="w-full h-full object-cover">
@@ -594,7 +487,7 @@ try {
                         </div>
                         <div class="text-sm font-bold text-slate-900 mb-1 truncate w-full"><?php echo htmlspecialchars($mod['nome']); ?></div>
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">
+                            <span class="text-[10px] bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">
                                 Reputação <?php echo $mod['trust_score']; ?>
                             </span>
                         </div>
@@ -616,15 +509,15 @@ try {
             
             <form id="form-sugestao">
                 <textarea id="msg-sugestao" required placeholder="Digite sua sugestão ou feedback aqui..." 
-                          class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none h-40 transition mb-6"></textarea>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                          class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 text-sm focus:ring-2 focus:ring-primary-500 outline-none h-40 transition mb-6"></textarea>
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-paper-plane"></i> Enviar Feedback
                 </button>
         </div>
     </div>
 
     <!-- Botão de Sugestões Flutuante -->
-    <button onclick="toggleSugestao()" class="fixed bottom-6 right-6 bg-emerald-600 hover:bg-emerald-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 transition-all hover:scale-110 z-[100] group">
+    <button onclick="toggleSugestao()" class="fixed bottom-6 right-6 bg-success-600 hover:bg-success-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl shadow-success-500/40 transition-all hover:scale-110 z-[100] group">
         <i class="fa-solid fa-lightbulb text-xl"></i>
         <span class="absolute right-full mr-4 bg-white text-slate-900 border border-slate-200 text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">Enviar Sugestão</span>
     </button>
@@ -673,12 +566,12 @@ try {
             
             // Update UI
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border-indigo-600');
+                btn.classList.remove('active', 'bg-primary-600', 'text-white', 'shadow-lg', 'shadow-primary-500/20', 'border-primary-600');
                 btn.classList.add('bg-white', 'text-slate-500', 'border-slate-100');
             });
             
             const activeBtn = event.currentTarget;
-            activeBtn.classList.add('active', 'bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-500/20', 'border-indigo-600');
+            activeBtn.classList.add('active', 'bg-primary-600', 'text-white', 'shadow-lg', 'shadow-primary-500/20', 'border-primary-600');
             activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-100');
             
             triggerSearch();
@@ -723,8 +616,8 @@ try {
                                 </td>
                                 <td class="hidden sm:table-cell px-8 py-6 whitespace-nowrap text-[11px] font-black uppercase tracking-widest">
                                     ${c.status === 'aberto' ? `
-                                        <span class="text-emerald-600 flex items-center gap-2">
-                                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        <span class="text-success-600 flex items-center gap-2">
+                                            <span class="w-2 h-2 bg-success-500 rounded-full animate-pulse"></span>
                                             Aberto
                                         </span>
                                     ` : `
@@ -738,7 +631,7 @@ try {
                                     ${c.total_amostras}
                                 </td>
                                 <td class="px-2 sm:px-6 py-4 whitespace-nowrap text-center">
-                                    <span class="font-mono font-bold text-emerald-600">${c.pnc_ia > 0 ? parseFloat(c.pnc_ia).toFixed(1) : (c.nota_maxima ? parseFloat(c.nota_maxima).toFixed(1) : '--')}</span>
+                                    <span class="font-mono font-bold text-success-600">${c.pnc_ia > 0 ? parseFloat(c.pnc_ia).toFixed(1) : (c.nota_maxima ? parseFloat(c.nota_maxima).toFixed(1) : '--')}</span>
                                 </td>
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
                                     <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-slate-900 transition-colors"></i>

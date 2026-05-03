@@ -48,7 +48,7 @@ try {
     $concurso_id = $info['concurso_id'];
 
     // Busca Top Moderadores deste concurso (Wiki)
-    $stmt = $pdo->prepare("SELECT u.nome, u.trust_score, u.foto_perfil, COUNT(el.id) as contribuicoes
+    $stmt = $pdo->prepare("SELECT u.nickname as nome, u.trust_score, u.foto_perfil, COUNT(el.id) as contribuicoes
                            FROM edicoes_log el
                            JOIN usuarios u ON el.usuario_id = u.id
                            WHERE (el.tipo_objeto = 'cargo' AND el.objeto_id = ?) 
@@ -70,7 +70,7 @@ try {
     $cargo_materias = $stmt->fetchAll();
 
     // 2. Fetch User Ranking (Filtered by Modality)
-    $sql = "SELECT ru.*, u.nome, u.trust_score, u.foto_perfil,
+    $sql = "SELECT ru.*, u.nickname as nome, u.trust_score, u.foto_perfil,
             (SELECT COUNT(*) FROM respostas_usuarios ru2 WHERE ru2.cargo_id = ru.cargo_id AND ru2.versao = ru.versao AND ru2.deleted_at IS NULL) as amostras_versao
             FROM respostas_usuarios ru 
             JOIN usuarios u ON ru.usuario_id = u.id 
@@ -121,8 +121,13 @@ try {
     $pnc_final = "--";
     $pnc_2etapa = "--";
     $quorum_atingido = ($total_participantes >= $quorum_minimo);
+    $inscritos_reais = 0;
+    $nota_maxima = $info['total_questoes'] ?? 0;
+    $score_onv_geral = 0;
+    $meu_score_onv = 0;
+    $minha_posicao_estimada = "--";
 
-    if ($total_participantes > 0 && $info['inscritos'] > 0) {
+    if ($total_participantes > 0 && ($info['inscritos'] ?? 0) > 0) {
         $sample_ratio = $total_participantes / $info['inscritos'];
         
         if ($total_participantes >= 10) {
@@ -145,11 +150,7 @@ try {
 
         $inscritos_reais = $info['inscritos'] * 0.7;
         $expansion_factor = ($total_participantes > 0) ? ($inscritos_reais * 0.15) / $total_participantes : 1;
-        $nota_maxima = $info['total_questoes'];
         $score_onv_geral = ($nota_maxima > 0) ? ($media_nota / $nota_maxima) * 100 : 0;
-        
-        $meu_score_onv = 0;
-        $minha_posicao_estimada = "--";
         
         if ($logged_in_user_rank) {
             $minha_nota = $ranking[$logged_in_user_rank - 1]['nota_estimada'];
@@ -205,6 +206,21 @@ try {
     
     <!-- External Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334145', 800: '#1e293b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="assets/css/ranking.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -212,75 +228,7 @@ try {
 </head>
 <body class="bg-slate-50 text-slate-600 min-h-screen pb-20 overflow-x-hidden">
     
-    <!-- Navbar -->
-    <nav class="bg-white/98 backdrop-blur-md sticky top-0 z-50 mb-8 border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                            <a href="index.php" class="flex items-center gap-3 group">
-                    <div class="h-10 w-10 group-hover:scale-110 transition-transform">
-                        <?php echo getLogoSVG(40); ?>
-                    </div>
-                    <span class="font-bold text-xl tracking-tight text-slate-900">Open<span class="text-indigo-600">Gabarito</span></span>
-                </a>
-            
-            <div class="flex items-center gap-2 sm:gap-6">
-                <div class="hidden md:flex items-center gap-1">
-                    <a href="index.php" class="text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 transition">Rankings</a>
-                    <a href="transparencia.php" class="text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 transition flex items-center gap-2">
-                        <i class="fa-solid fa-microchip text-[10px] text-indigo-500"></i> Transparência
-                    </a>
-                    <a href="minha_area.php" class="text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 transition">Minha Área</a>
-                    <?php if (isAdmin()): ?>
-                        <a href="admin/dashboard.php" class="text-rose-600 hover:text-rose-500 transition text-xs font-black uppercase tracking-widest px-4 py-2 flex items-center gap-2">
-                            <i class="fa-solid fa-screwdriver-wrench"></i> Admin
-                        </a>
-                    <?php endif; ?>
-                </div>
-                <a href="logout.php" class="bg-red-500/10 text-red-600 hover:bg-red-500/20 px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold transition">Sair</a>
-                
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden text-slate-500 hover:text-slate-900 p-2">
-                    <i class="fa-solid fa-bars text-xl"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Menu Container -->
-        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-xl shadow-lg">
-            <div class="px-4 pt-2 pb-6 space-y-1">
-                <a href="index.php" class="block px-3 py-4 text-base font-medium text-slate-900">Ranking Geral</a>
-                <a href="minha_area.php" class="block px-3 py-4 text-base font-medium text-slate-600">Minha Área</a>
-                <a href="transparencia.php" class="block px-3 py-4 text-base font-medium text-slate-600 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-indigo-500"></i> Transparência
-                </a>
-                <?php if (isAdmin()): ?>
-                    <a href="admin/dashboard.php" class="block px-3 py-4 text-base font-black text-rose-600 flex items-center gap-2">
-                        <i class="fa-solid fa-screwdriver-wrench"></i> Painel Admin
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </nav>
-
-    <script>
-        const menuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        function toggleMenu() {
-            mobileMenu.classList.toggle('hidden');
-            const icon = menuBtn.querySelector('i');
-            if (mobileMenu.classList.contains('hidden')) {
-                icon.classList.remove('fa-xmark');
-                icon.classList.add('fa-bars');
-            } else {
-                icon.classList.remove('fa-bars');
-                icon.classList.add('fa-xmark');
-            }
-        }
-        
-        if (menuBtn) {
-            menuBtn.addEventListener('click', toggleMenu);
-        }
-    </script>
+    <?php echo getNav(); ?>
 
     <main class="max-w-7xl mx-auto px-4">
         
@@ -298,12 +246,12 @@ try {
                             <?php echo e($info['nome_cargo']); ?>
                         </h1>
                         <div class="flex flex-wrap items-center gap-3">
-                            <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg border border-indigo-200 text-[10px] font-bold uppercase"><?php echo e($info['nome_orgao']); ?></span>
+                            <span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-lg border border-primary-200 text-[10px] font-bold uppercase"><?php echo e($info['nome_orgao']); ?></span>
                             <span class="text-slate-300">•</span>
-                            <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg border border-emerald-200 text-[10px] font-bold uppercase"><?php echo e($info['banca']); ?></span>
+                            <span class="bg-success-100 text-success-700 px-3 py-1 rounded-lg border border-success-200 text-[10px] font-bold uppercase"><?php echo e($info['banca']); ?></span>
                             
                             <?php if (isAdmin()): ?>
-                                <a href="admin/edit.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-rose-100 hover:bg-rose-200 text-rose-600 border border-rose-200 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition flex items-center gap-2">
+                                <a href="admin/edit.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-danger-100 hover:bg-danger-200 text-danger-600 border border-danger-200 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition flex items-center gap-2">
                                     <i class="fa-solid fa-screwdriver-wrench"></i> Editar Ranking
                                 </a>
                             <?php endif; ?>
@@ -311,13 +259,13 @@ try {
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                    <a href="novo_gabarito.php?cargo_id=<?php echo $cargo_id; ?>" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                    <a href="novo_gabarito.php?cargo_id=<?php echo $cargo_id; ?>" class="flex-1 md:flex-none bg-success-600 hover:bg-success-500 text-white px-4 py-3 rounded-xl text-xs font-bold transition shadow-lg shadow-success-500/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-pen-to-square"></i> <?php echo $logged_in_user_rank ? 'Editar Meu Gabarito' : 'Cadastrar Gabarito'; ?>
                     </a>
                     <button id="open-simulate" class="flex-1 md:flex-none bg-white hover:bg-slate-50 text-slate-900 px-4 py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-slate-200 shadow-sm">
-                        <i class="fa-solid fa-rotate text-indigo-600"></i> Simular
+                        <i class="fa-solid fa-rotate text-primary-600"></i> Simular
                     </button>
-                    <button class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                    <button class="flex-1 md:flex-none bg-primary-600 hover:bg-primary-500 text-white px-4 py-3 rounded-xl text-xs font-bold transition shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-share-nodes"></i> Compartilhar
                     </button>
                 </div>
@@ -352,7 +300,7 @@ try {
                 <div>
                     <div class="flex items-center justify-between mb-6">
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Amostragem</span>
-                        <i class="fa-solid fa-users-viewfinder text-indigo-600"></i>
+                        <i class="fa-solid fa-users-viewfinder text-primary-600"></i>
                     </div>
                     <div class="space-y-4">
                         <div class="flex justify-between items-center">
@@ -361,11 +309,11 @@ try {
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-xs text-slate-500">Participantes</span>
-                            <span class="text-sm font-bold text-emerald-600"><?php echo number_format($total_participantes, 0, ',', '.'); ?></span>
+                            <span class="text-sm font-bold text-success-600"><?php echo number_format($total_participantes, 0, ',', '.'); ?></span>
                         </div>
                         <div class="flex justify-between items-center pt-3 border-t border-slate-100">
                             <span class="text-xs text-slate-500">Vagas 2ª Etapa</span>
-                            <span class="text-sm font-bold text-indigo-600"><?php echo ($info['vagas_2etapa'] > 0) ? $info['vagas_2etapa'] : ($info['vagas'] * 3); ?></span>
+                            <span class="text-sm font-bold text-primary-600"><?php echo ($info['vagas_2etapa'] > 0) ? $info['vagas_2etapa'] : ($info['vagas'] * 3); ?></span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-xs text-slate-500">Vagas Finais</span>
@@ -376,10 +324,10 @@ try {
             </div>
 
             <!-- Projeção de Corte -->
-            <div class="bg-white border border-slate-200 rounded-2xl p-6 border-l-4 border-indigo-600 shadow-sm">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 border-l-4 border-primary-600 shadow-sm">
                 <div class="flex items-center justify-between mb-6">
-                    <span class="text-[10px] text-indigo-600 font-bold uppercase tracking-widest">Possível Corte</span>
-                    <i class="fa-solid fa-scissors text-indigo-600"></i>
+                    <span class="text-[10px] text-primary-600 font-bold uppercase tracking-widest">Possível Corte</span>
+                    <i class="fa-solid fa-scissors text-primary-600"></i>
                 </div>
                 <div class="space-y-6">
                     <div class="text-center">
@@ -387,17 +335,17 @@ try {
                         <div class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-tighter">Corte 2ª Etapa</div>
                     </div>
                     <div class="text-center pt-5 border-t border-slate-100">
-                        <div class="text-3xl font-black text-emerald-600"><?php echo $pnc_final; ?></div>
+                        <div class="text-3xl font-black text-success-600"><?php echo $pnc_final; ?></div>
                         <div class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-tighter">Corte Final</div>
                     </div>
                 </div>
             </div>
 
             <!-- Minha Performance -->
-            <div class="bg-white border border-slate-200 rounded-2xl p-6 border-l-4 border-emerald-600 shadow-sm">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 border-l-4 border-success-600 shadow-sm">
                 <div class="flex items-center justify-between mb-6">
-                    <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Minha Performance</span>
-                    <i class="fa-solid fa-chart-line text-emerald-600"></i>
+                    <span class="text-[10px] text-success-600 font-bold uppercase tracking-widest">Minha Performance</span>
+                    <i class="fa-solid fa-chart-line text-success-600"></i>
                 </div>
                 <?php if ($logged_in_user_rank): ?>
                     <div class="space-y-5">
@@ -407,7 +355,7 @@ try {
                         </div>
                         <div class="grid grid-cols-2 gap-2 pt-5 border-t border-slate-100">
                             <div class="text-center">
-                                <div class="text-lg font-bold text-emerald-600"><?php echo number_format($meu_score_onv, 2); ?>%</div>
+                                <div class="text-lg font-bold text-success-600"><?php echo number_format($meu_score_onv, 2); ?>%</div>
                                 <div class="text-[9px] text-slate-400 uppercase font-black">Meu Score</div>
                             </div>
                             <div class="text-center">
@@ -420,7 +368,7 @@ try {
                     <div class="flex flex-col items-center justify-center h-full text-center py-4">
                         <i class="fa-solid fa-lock text-slate-200 text-2xl mb-3"></i>
                         <p class="text-[10px] text-slate-400 uppercase font-bold leading-tight mb-4">Envie seu gabarito para desbloquear suas projeções.</p>
-                        <a href="novo_gabarito.php?cargo_id=<?php echo $cargo_id; ?>" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest flex items-center justify-center gap-2">
+                        <a href="novo_gabarito.php?cargo_id=<?php echo $cargo_id; ?>" class="w-full bg-success-600 hover:bg-success-500 text-white py-2 rounded-xl text-[10px] font-black transition uppercase tracking-widest flex items-center justify-center gap-2">
                              <i class="fa-solid fa-plus"></i> Cadastrar Agora
                         </a>
                     </div>
@@ -470,7 +418,7 @@ try {
                         <a href="colaborar.php?cargo_id=<?php echo $cargo_id; ?>" class="block w-full text-center bg-amber-50 hover:bg-amber-100 text-amber-600 text-[9px] font-black py-2 rounded-lg transition-all border border-amber-200 uppercase tracking-widest">
                             Editar Dados Wiki
                         </a>
-                        <button onclick="toggleUpdateModal()" class="block w-full text-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[9px] font-black py-2 rounded-lg transition-all border border-indigo-200 uppercase tracking-widest">
+                        <button onclick="toggleUpdateModal()" class="block w-full text-center bg-primary-50 hover:bg-primary-100 text-primary-600 text-[9px] font-black py-2 rounded-lg transition-all border border-primary-200 uppercase tracking-widest">
                             <i class="fa-solid fa-bullhorn mr-1"></i> Reportar Nomeações
                         </button>
                     </div>
@@ -483,7 +431,7 @@ try {
             <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="toggleUpdateModal()"></div>
             <div class="glass-panel w-full max-w-lg rounded-3xl p-8 relative animate-fade-in shadow-2xl border border-slate-200">
                 <h2 class="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-                    <i class="fa-solid fa-clipboard-list text-indigo-400"></i> Atualizar Lista
+                    <i class="fa-solid fa-clipboard-list text-primary-400"></i> Atualizar Lista
                 </h2>
                 <p class="text-slate-500 mb-6 text-sm">Houve nomeações ou nova lista de convocados? Informe aqui para atualizarmos o ranking.</p>
                 
@@ -491,7 +439,7 @@ try {
                     <input type="hidden" name="concurso_id" value="<?php echo $info['concurso_id']; ?>">
                     <div class="mb-4">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Tipo de Atualização</label>
-                        <select name="tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <select name="tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 text-sm focus:ring-2 focus:ring-primary-500 outline-none">
                             <option value="nomeacao">Novas Nomeações</option>
                             <option value="lista_atualizada">Nova Lista de Convocados</option>
                             <option value="homologacao">Homologação do Concurso</option>
@@ -501,9 +449,9 @@ try {
                     <div class="mb-6">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Mensagem / Link Oficial</label>
                         <textarea name="mensagem" required placeholder="Ex: Saíram 10 novos nomeados no Diário Oficial de hoje. Link: ..." 
-                                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none h-32 transition"></textarea>
+                                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 text-sm focus:ring-2 focus:ring-primary-500 outline-none h-32 transition"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                    <button type="submit" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-paper-plane"></i> Enviar Atualização
                     </button>
                 </form>
@@ -563,13 +511,13 @@ try {
                 <div class="relative w-full md:w-80">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                     <input type="text" id="search-candidate" placeholder="Buscar candidato..." 
-                           class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition shadow-sm">
+                           class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary-500 outline-none transition shadow-sm">
                 </div>
             </div>
 
             <div class="p-6">
-                <button onclick="scrollToUser()" class="mb-6 w-full md:w-auto bg-slate-50 hover:bg-white border border-slate-200 text-slate-900 text-[10px] font-black py-4 px-8 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow-indigo-500/10 active:scale-95 group">
-                    <i class="fa-solid fa-location-crosshairs text-indigo-600 group-hover:rotate-90 transition-transform duration-500"></i> 
+                <button onclick="scrollToUser()" class="mb-6 w-full md:w-auto bg-slate-50 hover:bg-white border border-slate-200 text-slate-900 text-[10px] font-black py-4 px-8 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow-primary-500/10 active:scale-95 group">
+                    <i class="fa-solid fa-location-crosshairs text-primary-600 group-hover:rotate-90 transition-transform duration-500"></i> 
                     ENCONTRAR MINHA POSIÇÃO NO RANKING
                 </button>
 
@@ -584,7 +532,7 @@ try {
                                     <th class="px-4 py-2 text-center min-w-[90px] cursor-help group" 
                                         onclick="Toast.show('Matéria: <?php echo addslashes($m['nome_materia']); ?>', 'info')"
                                         title="<?php echo htmlspecialchars($m['nome_materia']); ?>">
-                                        <span class="text-[10px] border-b border-dotted border-slate-300 group-hover:text-indigo-600 transition-colors">
+                                        <span class="text-[10px] border-b border-dotted border-slate-300 group-hover:text-primary-600 transition-colors">
                                             <?php echo htmlspecialchars($m['sigla_materia']); ?>
                                         </span>
                                     </th>
@@ -599,13 +547,13 @@ try {
                                 $is_top = $idx < $vagas_finais;
                                 $is_second = $idx >= $vagas_finais && $idx < $vagas_2etapa;
                             ?>
-                                <tr id="<?php echo $is_me ? 'my-rank-row' : ''; ?>" class="group transition-all <?php echo $is_me ? 'bg-indigo-50 ring-1 ring-indigo-200' : 'bg-white hover:bg-slate-50'; ?> rounded-2xl overflow-hidden shadow-sm">
+                                <tr id="<?php echo $is_me ? 'my-rank-row' : ''; ?>" class="group transition-all <?php echo $is_me ? 'bg-primary-50 ring-1 ring-primary-200' : 'bg-white hover:bg-slate-50'; ?> rounded-2xl overflow-hidden shadow-sm">
                                     <td class="px-2 sm:px-4 py-4 sm:py-6 text-center font-black rounded-l-2xl <?php echo ($idx < 3) ? 'text-amber-500' : 'text-slate-400'; ?>">
                                         <?php echo $idx + 1; ?>º
                                     </td>
                                     <td class="px-2 sm:px-4 py-4 sm:py-6">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:border-indigo-500 transition shadow-inner shrink-0">
+                                            <div class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:border-primary-500 transition shadow-inner shrink-0">
                                                 <?php if (!empty($r['foto_perfil'])): ?>
                                                     <img src="<?php echo $r['foto_perfil']; ?>" class="w-full h-full object-cover">
                                                 <?php else: ?>
@@ -613,7 +561,7 @@ try {
                                                 <?php endif; ?>
                                             </div>
                                             <div class="min-w-0">
-                                                <div class="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition truncate flex items-center gap-2">
+                                                <div class="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition truncate flex items-center gap-2">
                                                     <?php echo htmlspecialchars($r['nome']); ?>
                                                     <?php if (($r['trust_score'] ?? 0) >= 80): ?>
                                                         <span class="bg-amber-50 text-amber-600 text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest border border-amber-200" title="Moderador Confiável">
@@ -622,7 +570,7 @@ try {
                                                     <?php endif; ?>
                                                 </div>
                                                 <div class="flex items-center gap-2 mt-0.5">
-                                                    <span class="text-[8px] text-indigo-600/70 font-black uppercase tracking-widest">Versão <?php echo $r['versao']; ?></span>
+                                                    <span class="text-[8px] text-primary-600/70 font-black uppercase tracking-widest">Versão <?php echo $r['versao']; ?></span>
                                                     <?php 
                                                         // Cálculo de Posição Estimada via Curva de Gauss (Z-Score)
                                                         $z_individual = ($desvio_padrao > 0) ? ($r['nota_estimada'] - $media_nota) / $desvio_padrao : 0;
@@ -630,22 +578,22 @@ try {
                                                         $pos_est = floor($perc_individual * ($inscritos_reais * 0.15));
                                                         if ($pos_est < $idx + 1) $pos_est = $idx + 1;
                                                     ?>
-                                                    <span class="text-[8px] text-emerald-600 font-black uppercase tracking-widest">Pos. Estimada: <?php echo $pos_est; ?>º</span>
+                                                    <span class="text-[8px] text-success-600 font-black uppercase tracking-widest">Pos. Estimada: <?php echo $pos_est; ?>º</span>
                                                     <?php if ($r['amostras_versao'] < 5): ?>
                                                         <span class="text-[7px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-200 font-black uppercase tracking-tighter" title="Poucos dados para esta versão. A nota pode oscilar.">Nota em Formação</span>
                                                     <?php endif; ?>
                                                     <?php if ($is_me): ?>
-                                                        <span class="text-[7px] bg-indigo-500 text-white px-1 py-0.5 rounded-full font-black uppercase tracking-tighter">Você</span>
+                                                        <span class="text-[7px] bg-primary-500 text-white px-1 py-0.5 rounded-full font-black uppercase tracking-tighter">Você</span>
                                                     <?php endif; ?>
                                                     <?php if ($r['status_eliminado']): ?>
-                                                        <span class="text-[7px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-lg shadow-rose-500/20">ELIMINADO</span>
+                                                        <span class="text-[7px] bg-danger-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-lg shadow-danger-500/20">ELIMINADO</span>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-2 sm:px-4 py-4 sm:py-6 text-center">
-                                        <div class="text-base font-black <?php echo $is_top ? 'text-emerald-600' : 'text-indigo-600'; ?>">
+                                        <div class="text-base font-black <?php echo $is_top ? 'text-success-600' : 'text-primary-600'; ?>">
                                             <?php echo number_format((float)($r['nota_estimada'] ?? 0), 1); ?>
                                         </div>
                                     </td>
@@ -696,7 +644,7 @@ try {
                 <?php for($i=1; $i<=$info['total_questoes']; $i++): ?>
                     <label class="relative group cursor-pointer">
                         <input type="checkbox" class="null-q hidden" value="<?php echo $i; ?>">
-                        <div class="bg-slate-50 border border-slate-200 p-2 rounded-lg text-center text-xs font-bold transition group-hover:border-indigo-500 peer-checked:bg-indigo-600 peer-checked:text-white text-slate-600">
+                        <div class="bg-slate-50 border border-slate-200 p-2 rounded-lg text-center text-xs font-bold transition group-hover:border-primary-500 peer-checked:bg-primary-600 peer-checked:text-white text-slate-600">
                             <?php echo $i; ?>
                         </div>
                     </label>
@@ -704,7 +652,7 @@ try {
             </div>
             
             <div class="flex justify-end gap-4">
-                <button id="apply-simulation" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20">
+                <button id="apply-simulation" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-primary-500/20">
                     Aplicar Simulação
                 </button>
             </div>
@@ -715,10 +663,10 @@ try {
 
     <script src="assets/js/ranking.js"></script>
     <style>
-        .peer-checked\:bg-indigo-600:checked + div {
-            background-color: #6366f1;
+        .peer-checked\:bg-primary-600:checked + div {
+            background-color: #2563eb;
             color: white;
-            border-color: #6366f1;
+            border-color: #2563eb;
         }
     </style>
     <!-- Modal de Sugestões -->
@@ -730,9 +678,9 @@ try {
             
             <form id="form-sugestao">
                 <textarea id="msg-sugestao" required placeholder="Digite sua sugestão ou feedback aqui..." 
-                          class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none h-40 transition mb-6"></textarea>
+                          class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 text-sm focus:ring-2 focus:ring-primary-500 outline-none h-40 transition mb-6"></textarea>
                 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-paper-plane"></i> Enviar Feedback
                 </button>
             </form>
@@ -740,7 +688,7 @@ try {
     </div>
 
     <!-- Botão de Sugestões Flutuante -->
-    <button onclick="toggleSugestao()" class="fixed bottom-6 right-6 bg-emerald-600 hover:bg-emerald-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 transition-all hover:scale-110 z-[100] group">
+    <button onclick="toggleSugestao()" class="fixed bottom-6 right-6 bg-success-600 hover:bg-success-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl shadow-success-500/40 transition-all hover:scale-110 z-[100] group">
         <i class="fa-solid fa-lightbulb text-xl"></i>
         <span class="absolute right-full mr-4 bg-white text-slate-900 border border-slate-200 text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">Enviar Sugestão</span>
     </button>

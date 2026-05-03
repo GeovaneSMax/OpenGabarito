@@ -74,6 +74,21 @@ $gabarito_atual = json_decode($stmt->fetchColumn() ?: '[]', true);
     <meta charset="UTF-8">
     <title>Gabarito Oficial | Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8" },
+                        success: { 400: "#4ade80", 500: "#22c55e", 600: "#16a34a" },
+                        danger: { 500: "#ef4444", 600: "#dc2626" },
+                        slate: { 50: "#f8fafc", 100: "#f1f5f9", 200: "#e2e8f0", 300: "#cbd5e1", 400: "#94a3b8", 500: "#64748b", 600: "#475569", 700: "#334145", 800: "#1e293b", 900: "#0f172a" }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background: #0f172a; color: #f8fafc; }
@@ -91,13 +106,13 @@ $gabarito_atual = json_decode($stmt->fetchColumn() ?: '[]', true);
         </div>
 
         <?php if ($sucesso): ?>
-            <div class="mb-8 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-2xl"><?php echo $sucesso; ?></div>
+            <div class="mb-8 bg-success-500/10 border border-success-500/20 text-success-400 p-4 rounded-2xl"><?php echo $sucesso; ?></div>
         <?php endif; ?>
 
         <div class="flex gap-2 mb-8">
             <?php for($v=1; $v<=4; $v++): ?>
                 <a href="?cargo_id=<?php echo $cargo_id; ?>&versao=<?php echo $v; ?>" 
-                   class="px-6 py-2 rounded-xl font-bold transition <?php echo $versao == $v ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'; ?>">
+                   class="px-6 py-2 rounded-xl font-bold transition <?php echo $versao == $v ? 'bg-primary-600 text-white' : 'bg-slate-800 text-slate-400'; ?>">
                     Versão <?php echo $v; ?>
                 </a>
             <?php endfor; ?>
@@ -107,9 +122,9 @@ $gabarito_atual = json_decode($stmt->fetchColumn() ?: '[]', true);
             <?php echo csrfInput(); ?>
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <h3 class="text-white font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-indigo-400"></i> Inserir Respostas para Versão <?php echo $versao; ?>
+                    <i class="fa-solid fa-list-check text-primary-400"></i> Inserir Respostas para Versão <?php echo $versao; ?>
                 </h3>
-                <a href="pdf_import.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition flex items-center gap-2">
+                <a href="pdf_import.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-danger-500/10 hover:bg-danger-500/20 text-danger-400 border border-danger-500/30 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition flex items-center gap-2">
                     <i class="fa-solid fa-file-pdf"></i> Importar via PDF (IA)
                 </a>
             </div>
@@ -118,7 +133,7 @@ $gabarito_atual = json_decode($stmt->fetchColumn() ?: '[]', true);
                 <?php for($i=1; $i<=$info['total_questoes']; $i++): ?>
                     <div class="flex flex-col gap-1">
                         <span class="text-[10px] text-slate-500 font-bold ml-1">Q<?php echo $i; ?></span>
-                        <select name="q[<?php echo $i; ?>]" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-white outline-none focus:ring-1 focus:ring-indigo-500">
+                        <select name="q[<?php echo $i; ?>]" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-white outline-none focus:ring-1 focus:ring-primary-500">
                             <option value="">-</option>
                             <?php foreach(['A','B','C','D','E','X'] as $alt): ?>
                                 <option value="<?php echo $alt; ?>" <?php echo ($gabarito_atual[$i] ?? '') == $alt ? 'selected' : ''; ?>>
@@ -130,7 +145,7 @@ $gabarito_atual = json_decode($stmt->fetchColumn() ?: '[]', true);
                 <?php endfor; ?>
             </div>
 
-            <button type="submit" name="salvar_gabarito" class="w-full mt-10 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-2xl transition shadow-xl">
+            <button type="submit" name="salvar_gabarito" class="w-full mt-10 bg-primary-600 hover:bg-primary-500 text-white font-black py-4 rounded-2xl transition shadow-xl">
                 Salvar Gabarito Oficial e Atualizar Ranking
             </button>
         </form>

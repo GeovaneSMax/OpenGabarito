@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['criar_concurso'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="ranking.css" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .glass-panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        body { background: var(--slate-900); color: var(--slate-50); font-family: 'Inter', sans-serif; }
+        .glass-panel { background: white; border: 1px solid var(--slate-100); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col pb-20">

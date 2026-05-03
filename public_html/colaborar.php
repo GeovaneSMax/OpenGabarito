@@ -225,6 +225,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Colaborar Wiki | OpenGabarito</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334145', 800: '#1e293b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="assets/js/toasts.js"></script>
@@ -232,9 +247,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800;900&display=swap');
         
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --emerald: #10b981;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #22c55e;
         }
 
         body { 
@@ -277,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .input-elegant:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         .btn-modern {
@@ -296,7 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-modern:hover {
             background: var(--primary-dark);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .btn-secondary {
@@ -319,7 +334,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             font-weight: 800;
             font-size: 0.875rem;
-            background: #eef2ff;
+            background: #eff6ff;
             color: var(--primary);
             margin-bottom: 1rem;
         }
@@ -352,39 +367,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="min-h-screen relative overflow-x-hidden">
     <!-- Background Accents -->
     <div class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none overflow-hidden">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-        <div class="absolute top-[20%] right-[-5%] w-[35%] h-[35%] bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute top-[20%] right-[-5%] w-[35%] h-[35%] bg-success-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
         <div class="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
     </div>
 
     <nav class="sticky top-0 z-50 glass border-b border-slate-200/50">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="index.php" class="flex items-center gap-2">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+            <a href="index.php" class="flex items-center gap-2 shrink-0">
                 <div class="scale-90"><?php echo getLogoSVG(36); ?></div>
-                <span class="font-outfit font-black text-xl tracking-tight text-slate-900">Open<span class="text-indigo-600">Gabarito</span></span>
+                <span class="font-outfit font-black text-lg sm:text-xl tracking-tight text-slate-900 whitespace-nowrap">Open<span class="text-blue-600">Gabarito</span></span>
             </a>
             <div class="hidden md:flex items-center gap-6">
-                <a href="ranking.php" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Rankings</a>
-                <a href="minha_area.php" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Minha Área</a>
+                <a href="index.php" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Rankings</a>
+                <a href="minha_area.php" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">Minha Área</a>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full">Wiki Engine v3</span>
+                <span class="hidden sm:inline-block text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full whitespace-nowrap">Wiki Engine v3</span>
+                <button id="mobile-menu-btn" class="md:hidden text-slate-500 hover:text-slate-900 p-2">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Container -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-xl shadow-lg">
+            <div class="px-4 py-6 space-y-2">
+                <a href="index.php" class="block px-4 py-3 text-base font-bold text-slate-700 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
+                    <i class="fa-solid fa-list-ol text-blue-500 w-5"></i> Rankings
+                </a>
+                <a href="minha_area.php" class="block px-4 py-3 text-base font-bold text-slate-700 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
+                    <i class="fa-solid fa-circle-user text-blue-500 w-5"></i> Minha Área
+                </a>
+                <a href="transparencia.php" class="block px-4 py-3 text-base font-bold text-slate-700 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
+                    <i class="fa-solid fa-microchip text-blue-500 w-5"></i> Transparência
+                </a>
+                
+                <?php if (isLoggedIn()): ?>
+                    <div class="pt-4 border-t border-slate-100 mt-4">
+                        <a href="logout.php" class="block px-4 py-3 text-base font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all flex items-center gap-3">
+                            <i class="fa-solid fa-power-off w-5"></i> Sair
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
 
+    <script>
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+            document.getElementById('mobile-menu')?.classList.toggle('hidden');
+        });
+    </script>
+
     <main class="max-w-5xl mx-auto px-4 py-12">
         <!-- Hero Header -->
         <header class="text-center mb-16 relative">
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full mb-6">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full mb-6">
                 <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
-                <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Central de Inteligência Colaborativa</span>
+                <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Central de Inteligência Colaborativa</span>
             </div>
             <h1 class="text-4xl md:text-5xl font-outfit font-black text-slate-900 mb-4 tracking-tight">
-                Construa o Gabarito <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-emerald-500">do Amanhã.</span>
+                Construa o Gabarito <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-success-500">do Amanhã.</span>
             </h1>
             <p class="text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
                 Nossa IA processa milhares de dados, mas o seu olhar humano é o que garante a perfeição. Ajude a democratizar a informação.
@@ -392,26 +439,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </header>
 
         <?php if (!empty($erro)): ?>
-            <div class="bento-card border-rose-200 bg-rose-50/50 p-6 mb-8 flex items-center gap-4 animate-fade-in">
-                <div class="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
+            <div class="bento-card border-red-200 bg-red-50/50 p-6 mb-8 flex items-center gap-4 animate-fade-in">
+                <div class="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
                     <i class="fa-solid fa-circle-exclamation"></i>
                 </div>
-                <p class="text-rose-700 font-semibold text-sm"><?php echo $erro; ?></p>
+                <p class="text-red-700 font-semibold text-sm"><?php echo $erro; ?></p>
             </div>
         <?php endif; ?>
 
         <!-- Community Bento Hub -->
         <section class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
             <!-- PDF Import (Main Action) -->
-            <div class="md:col-span-8 bento-card p-8 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white border-0 overflow-hidden relative group">
+            <div class="md:col-span-8 bento-card p-8 bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0 overflow-hidden relative group">
                 <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full filter blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
                 <div class="relative z-10 flex flex-col md:flex-row items-center gap-8 h-full">
                     <div class="flex-grow">
                         <h3 class="text-2xl font-outfit font-black mb-2">Power Import (IA)</h3>
-                        <p class="text-indigo-100/80 text-sm font-medium mb-6">
+                        <p class="text-blue-100/80 text-sm font-medium mb-6">
                             Arraste o edital e nossa IA extrai automaticamente vagas, matérias e regras. Economize 20 minutos de trabalho manual.
                         </p>
-                        <button type="button" onclick="document.getElementById('edital-upload').click()" id="ai-import-btn" class="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold text-sm shadow-xl hover:bg-indigo-50 transition flex items-center gap-2">
+                        <button type="button" onclick="document.getElementById('edital-upload').click()" id="ai-import-btn" class="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold text-sm shadow-xl hover:bg-blue-50 transition flex items-center gap-2">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Injetar Edital (PDF)
                         </button>
                         <input type="file" id="edital-upload" accept="application/pdf" class="hidden" onchange="handleEditalUpload(this)">
@@ -422,14 +469,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Status da IA Overlaid -->
-                <div id="ai-status-bar" class="hidden absolute inset-0 bg-indigo-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-8 text-center">
+                <div id="ai-status-bar" class="hidden absolute inset-0 bg-blue-900/90 backdrop-blur-md z-20 flex flex-col items-center justify-center p-8 text-center">
                     <div class="w-full max-w-xs">
                         <div class="flex items-center justify-between mb-2">
-                            <span id="ai-status-text" class="text-xs font-bold uppercase tracking-widest text-indigo-200">Processando...</span>
+                            <span id="ai-status-text" class="text-xs font-bold uppercase tracking-widest text-blue-200">Processando...</span>
                             <span id="ai-status-percent" class="text-white text-xs font-black">0%</span>
                         </div>
                         <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                            <div id="ai-status-progress" class="h-full bg-emerald-400 transition-all duration-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]"></div>
+                            <div id="ai-status-progress" class="h-full bg-success-400 transition-all duration-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]"></div>
                         </div>
                     </div>
                 </div>
@@ -461,7 +508,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- History Time Travel -->
             <div class="md:col-span-4 bento-card p-6">
                 <h4 class="text-slate-900 font-bold text-sm mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left text-indigo-500"></i> Log Recente
+                    <i class="fa-solid fa-clock-rotate-left text-blue-500"></i> Log Recente
                 </h4>
                 <div class="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                     <?php if (empty($historico)): ?>
@@ -470,7 +517,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     <?php else: foreach ($historico as $h): ?>
                         <div class="relative pl-4 border-l-2 border-slate-100 group">
-                            <div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-slate-200 group-hover:bg-indigo-400 transition-colors"></div>
+                            <div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-slate-200 group-hover:bg-blue-400 transition-colors"></div>
                             <span class="block text-[10px] font-bold text-slate-800"><?php echo e($h['nome']); ?></span>
                             <span class="block text-[9px] text-slate-400 uppercase tracking-tight"><?php echo date('d/m H:i', strtotime($h['criado_em'])); ?></span>
                         </div>
@@ -482,10 +529,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="md:col-span-8 bento-card p-6 overflow-hidden">
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="text-slate-900 font-bold text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-images text-emerald-500"></i> Galeria da Comunidade
+                        <i class="fa-solid fa-images text-success-500"></i> Galeria da Comunidade
                     </h4>
                     <?php if ($info): ?>
-                        <button type="button" onclick="document.getElementById('concurso-image-upload').click()" class="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest flex items-center gap-1">
+                        <button type="button" onclick="document.getElementById('concurso-image-upload').click()" class="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1">
                             <i class="fa-solid fa-plus-circle"></i> Enviar Foto
                         </button>
                         <input type="file" id="concurso-image-upload" accept="image/*" class="hidden" onchange="uploadContestImage(this)">
@@ -583,9 +630,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ];
                     foreach ($regras_lista as $regra):
                     ?>
-                    <label class="relative flex items-center p-5 rounded-2xl border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition group">
+                    <label class="relative flex items-center p-5 rounded-2xl border border-slate-200 hover:border-blue-200 hover:bg-blue-50/50 cursor-pointer transition group">
                         <div class="flex-grow flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-indigo-100 text-slate-400 group-hover:text-indigo-600 flex items-center justify-center transition">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-blue-100 text-slate-400 group-hover:text-blue-600 flex items-center justify-center transition">
                                 <i class="fa-solid <?php echo $regra['icon']; ?>"></i>
                             </div>
                             <div>
@@ -593,7 +640,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <span class="text-[10px] text-slate-400 font-medium uppercase tracking-tight"><?php echo $regra['desc']; ?></span>
                             </div>
                         </div>
-                        <input type="checkbox" name="<?php echo $regra['name']; ?>" <?php echo ($info[$regra['name']] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <input type="checkbox" name="<?php echo $regra['name']; ?>" <?php echo ($info[$regra['name']] ?? 0) ? 'checked' : ''; ?> class="w-6 h-6 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500">
                     </label>
                     <?php endforeach; ?>
                 </div>
@@ -649,14 +696,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </section>
 
             <!-- Step 4: Official Answer Key (Gabarito Oficial) -->
-            <section class="bento-card p-8 md:p-12 border-emerald-100 bg-emerald-50/10">
-                <div class="badge-step bg-emerald-100 text-emerald-600">04</div>
+            <section class="bento-card p-8 md:p-12 border-success-100 bg-success-50/10">
+                <div class="badge-step bg-success-100 text-success-600">04</div>
                 <h2 class="text-2xl font-outfit font-black text-slate-900 mb-2 tracking-tight">Gabarito Oficial</h2>
                 <p class="text-slate-500 text-sm mb-10 font-medium leading-relaxed">Importe o gabarito liberado pela banca para oficializar os resultados.</p>
 
-                <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 pb-10 border-b border-emerald-100">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 pb-10 border-b border-success-100">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100">
+                        <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-success-500 shadow-sm border border-success-100">
                             <i class="fa-solid fa-file-invoice text-xl"></i>
                         </div>
                         <div>
@@ -665,7 +712,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <button type="button" onclick="document.getElementById('gabarito-upload').click()" class="btn-modern bg-emerald-600 hover:bg-emerald-700 text-[11px] shadow-emerald-200">
+                        <button type="button" onclick="document.getElementById('gabarito-upload').click()" class="btn-modern bg-success-600 hover:bg-success-700 text-[11px] shadow-success-200">
                             <i class="fa-solid fa-cloud-arrow-up"></i> PDF do Gabarito
                         </button>
                         <button type="button" onclick="addGabaritoVersion()" class="btn-modern btn-secondary text-[11px]">
@@ -678,9 +725,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Tabs de Versões -->
                 <div id="gabarito-tabs" class="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar"></div>
 
-                <div id="ai-gabarito-status" class="hidden mb-10 p-10 bg-white border border-dashed border-emerald-200 rounded-3xl text-center">
-                    <i class="fa-solid fa-circle-notch animate-spin text-emerald-500 text-3xl mb-4"></i>
-                    <p class="text-emerald-700 font-bold" id="gabarito-status-text">Analisando estrutura do gabarito...</p>
+                <div id="ai-gabarito-status" class="hidden mb-10 p-10 bg-white border border-dashed border-success-200 rounded-3xl text-center">
+                    <i class="fa-solid fa-circle-notch animate-spin text-success-500 text-3xl mb-4"></i>
+                    <p class="text-success-700 font-bold" id="gabarito-status-text">Analisando estrutura do gabarito...</p>
                 </div>
 
                 <div id="gabarito-container" class="space-y-8">
@@ -700,7 +747,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="space-y-10">
                     <div>
                         <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Total de Questões</label>
-                        <input type="number" name="total_questoes" required value="<?php echo $info['total_questoes'] ?? 60; ?>" class="w-full input-elegant text-4xl h-20 text-center font-outfit font-black text-indigo-600">
+                        <input type="number" name="total_questoes" required value="<?php echo $info['total_questoes'] ?? 60; ?>" class="w-full input-elegant text-4xl h-20 text-center font-outfit font-black text-blue-600">
                     </div>
 
                     <div id="materias-container" class="space-y-6">
@@ -724,15 +771,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <span class="text-xs font-black text-slate-400 uppercase mb-3 ml-1 block tracking-widest">Justificativa da Edição</span>
                             <textarea name="justificativa" rows="3" placeholder="Ex: Retificação do Edital n° 02/2026..." class="w-full input-elegant text-sm"></textarea>
                         </label>
-                        <div class="flex items-start gap-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-                            <i class="fa-solid fa-circle-info text-indigo-500 mt-1"></i>
-                            <p class="text-[10px] text-indigo-700 font-medium leading-relaxed uppercase tracking-tight">Suas edições alimentam a nossa IA. Usuários com alto Trust Score têm aprovação instantânea.</p>
+                        <div class="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+                            <i class="fa-solid fa-circle-info text-blue-500 mt-1"></i>
+                            <p class="text-[10px] text-blue-700 font-medium leading-relaxed uppercase tracking-tight">Suas edições alimentam a nossa IA. Usuários com alto Trust Score têm aprovação instantânea.</p>
                         </div>
                     </div>
 
                     <div class="pt-8">
                         <input type="hidden" name="finalizar" value="1">
-                        <button type="submit" class="w-full btn-modern py-6 text-xl shadow-xl shadow-indigo-100">
+                        <button type="submit" class="w-full btn-modern py-6 text-xl shadow-xl shadow-blue-100">
                             <i class="fa-solid fa-cloud-arrow-up"></i> Publicar na Wiki
                         </button>
                     </div>
@@ -866,7 +913,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Peso</label>
                         <input type="number" step="0.1" name="materia_peso[]" value="${m.peso || '1.0'}" class="w-full input-elegant text-xs text-center">
                     </div>
-                    <button type="button" onclick="this.closest('.animate-fade-in').remove()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition shadow-sm border border-rose-100">
+                    <button type="button" onclick="this.closest('.animate-fade-in').remove()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition shadow-sm border border-red-100">
                         <i class="fa-solid fa-trash-can text-sm"></i>
                     </button>
                 </div>
@@ -898,7 +945,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (versions.length === 0) { gabaritoData[1] = {}; versions.push(1); }
             tabs.innerHTML = versions.map(v => `
                 <button type="button" onclick="switchGabaritoVersion(${v})" 
-                        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentGabaritoVersion == v ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}">
+                        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentGabaritoVersion == v ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'}">
                     V${v}
                 </button>
             `).join('');
@@ -920,7 +967,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 html += `
                     <div class="flex flex-col gap-1">
                         <span class="text-[9px] font-black text-slate-300 ml-1">Q${i}</span>
-                        <select onchange="updateGabaritoAnswer(${i}, this.value)" class="input-elegant p-2 text-xs text-center cursor-pointer appearance-none bg-white font-bold ${val ? 'border-emerald-200 bg-emerald-50/30 text-emerald-700' : ''}">
+                        <select onchange="updateGabaritoAnswer(${i}, this.value)" class="input-elegant p-2 text-xs text-center cursor-pointer appearance-none bg-white font-bold ${val ? 'border-success-200 bg-success-50/30 text-success-700' : ''}">
                             <option value="">-</option>
                             ${['A','B','C','D','E','X'].map(alt => `<option value="${alt}" ${val === alt ? 'selected' : ''}>${alt === 'X' ? 'ANUL' : alt}</option>`).join('')}
                         </select>
@@ -1003,10 +1050,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (res.exists && res.matches.length > 0) {
                     alertBox.classList.remove('hidden');
                     matchesBox.innerHTML = res.matches.map(m => `
-                        <a href="colaborar.php?cargo_id=${m.cargo_id}" class="flex items-center justify-between p-3 bg-white hover:bg-indigo-50 rounded-xl border border-slate-100 transition shadow-sm">
+                        <a href="colaborar.php?cargo_id=${m.cargo_id}" class="flex items-center justify-between p-3 bg-white hover:bg-blue-50 rounded-xl border border-slate-100 transition shadow-sm">
                             <div class="text-left">
                                 <span class="block text-[10px] font-black text-slate-900 leading-tight">${m.nome_orgao}</span>
-                                <span class="text-[8px] text-indigo-500 font-bold uppercase">${m.nome_cargo || 'Geral'}</span>
+                                <span class="text-[8px] text-blue-500 font-bold uppercase">${m.nome_cargo || 'Geral'}</span>
                             </div>
                             <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 ml-4"></i>
                         </a>
@@ -1031,10 +1078,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             </div>
                             <div class="p-2 flex items-center justify-around border-t border-slate-50">
-                                <button type="button" onclick="voteImage(${img.id}, 1)" class="p-1 rounded-lg transition ${img.meu_voto == 1 ? 'text-emerald-500' : 'text-slate-300 hover:text-emerald-400'}">
+                                <button type="button" onclick="voteImage(${img.id}, 1)" class="p-1 rounded-lg transition ${img.meu_voto == 1 ? 'text-success-500' : 'text-slate-300 hover:text-success-400'}">
                                     <i class="fa-solid fa-thumbs-up text-xs"></i> <span class="text-[9px] font-bold">${img.votos_positivos}</span>
                                 </button>
-                                <button type="button" onclick="voteImage(${img.id}, -1)" class="p-1 rounded-lg transition ${img.meu_voto == -1 ? 'text-rose-500' : 'text-slate-300 hover:text-rose-400'}">
+                                <button type="button" onclick="voteImage(${img.id}, -1)" class="p-1 rounded-lg transition ${img.meu_voto == -1 ? 'text-red-500' : 'text-slate-300 hover:text-red-400'}">
                                     <i class="fa-solid fa-thumbs-down text-xs"></i> <span class="text-[9px] font-bold">${img.votos_negativos}</span>
                                 </button>
                             </div>

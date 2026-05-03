@@ -7,126 +7,163 @@ require_once __DIR__ . '/../includes/ui_helper.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobre o Desenvolvedor | Geovane S. Maximiano</title>
+    <title>Geovane S. Maximiano | Fullstack Developer & Concurseiro</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<?php echo rawurlencode(getLogoSVG(40)); ?>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 500: '#0f172a', 600: '#1f2937' },
+                        gray: { 50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db', 400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151', 800: '#1f2937', 900: '#111827', 950: '#0a0a0a' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        serif: ['Crimson Pro', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #0f172a; overflow-x: hidden; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(0, 0, 0, 0.05); }
-        .gradient-text { background: linear-gradient(135deg, #4f46e5 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero-blob { position: absolute; filter: blur(80px); opacity: 0.1; z-index: -1; border-radius: 50%; }
-        .card-hover:hover { transform: translateY(-5px); border-color: rgba(99, 102, 241, 0.2); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); }
+        :root { --primary-primary: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; overflow-x: hidden; }
+        
+        .text-balance { text-wrap: balance; }
+        
+        .section-title { font-family: 'Outfit', sans-serif; }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-    <!-- Blobs decorativos -->
-    <div class="hero-blob w-96 h-96 bg-indigo-600 top-[-10%] left-[-10%] animate-pulse"></div>
-    <div class="hero-blob w-[500px] h-[500px] bg-emerald-600 bottom-[-10%] right-[-10%] animate-pulse" style="animation-delay: 2s"></div>
+    <main class="relative pt-32">
+        <section class="max-w-4xl mx-auto px-6 mb-20 text-center">
+            <h1 class="section-title text-5xl lg:text-7xl font-black text-gray-900 leading-tight mb-8 text-balance">
+                "O verdadeiro poder do código reside em sua capacidade de ser <span class="text-primary-500">aberto</span>, <span class="text-gray-600">colaborativo</span> e <span class="text-primary-500">livre</span>."
+            </h1>
+            <p class="text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto">
+                Acreditamos na força da comunidade e na inovação impulsionada pelo compartilhamento.
+            </p>
+        </section>
 
-    <nav class="p-6 max-w-7xl mx-auto flex justify-between items-center relative z-10">
-        <a href="index.php" class="flex items-center gap-2 group">
-            <div class="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white group-hover:rotate-12 transition shadow-lg shadow-indigo-500/20">
-                <i class="fa-solid fa-chevron-left text-xs"></i>
-            </div>
-            <span class="text-sm font-bold text-slate-400 group-hover:text-slate-900 transition">Voltar ao Sistema</span>
-        </a>
-    </nav>
-
-    <main class="max-w-5xl mx-auto px-6 py-20 relative z-10">
-        <div class="flex flex-col md:flex-row items-center gap-12 mb-24">
-            <div class="relative">
-                <div class="w-48 h-48 md:w-64 md:h-64 rounded-[40px] bg-gradient-to-br from-indigo-500 to-emerald-500 p-1 rotate-3 shadow-2xl overflow-hidden group">
-                    <img src="https://opengabarito.com.br/includes/uploads/e225aafea2957f27cfeae97c1374fae7_1777470704.png" class="w-full h-full object-cover rounded-[38px] group-hover:scale-110 transition duration-500" alt="Geovane S. Maximiano">
-                </div>
-                <div class="absolute -bottom-4 -right-4 bg-indigo-600 text-white px-4 py-2 rounded-2xl font-bold text-xs shadow-xl rotate-[-5deg]">
-                    Desenvolvedor
+        <!-- Ecosystem: The Multi-Project Strategy -->
+        <section id="projects" class="max-w-7xl mx-auto px-6 mb-40">
+            <div class="flex flex-col md:flex-row items-end justify-between gap-8 mb-20">
+                <div class="max-w-xl">
+                    <h2 class="section-title text-4xl font-black text-gray-900 mb-6 uppercase tracking-tighter">Meus <span class="text-primary-500">Projetos</span></h2>
+                    <p class="text-gray-500 leading-relaxed italic">
+                        De soluções empresariais a impacto social, cada projeto é uma peça de um quebra-cabeça tecnológico voltado para a eficiência e o bem comum.
+                    </p>
                 </div>
             </div>
-            
-            <div class="flex-1 text-center md:text-left">
-                <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight text-slate-900">Geovane S. <br><span class="gradient-text">Maximiano</span></h1>
-                <p class="text-xl text-slate-500 max-w-2xl leading-relaxed font-light">
-                    Desenvolvedor Full-Stack especializado em arquitetura de sistemas escaláveis e segurança de dados. Criador de soluções que transformam complexidade em simplicidade.
-                </p>
-                
-                <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-10">
-                    <a href="https://wa.me/5511998833971" target="_blank" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-bold transition shadow-xl shadow-indigo-500/20 flex items-center gap-3">
-                        <i class="fa-brands fa-whatsapp"></i> Vamos Conversar
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
+                    <div class="flex justify-between items-start mb-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <span class="text-[9px] font-black text-primary-500 bg-gray-100 px-4 py-1.5 rounded-full uppercase tracking-widest">Flagship Product</span>
+                    </div>
+                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">OpenGabarito</h3>
+                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
+                        Plataforma colaborativa que revoluciona o acompanhamento de concursos públicos. Através de <span class="text-gray-900 font-bold">inteligência coletiva</span> e modelos preditivos em <span class="text-gray-900 font-bold">IA</span>, o sistema processa milhares de dados para entregar transparência e precisão em rankings.
+                    </p>
+                    <div class="flex flex-wrap gap-3 mb-12">
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">PHP 8.2</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Tailwind Engine</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Groq / Gemini AI</span>
+                    </div>
+                    <a href="index.php" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
+                        Launch Application <i class="fa-solid fa-arrow-right"></i>
                     </a>
-                    <div class="flex gap-4 items-center px-4">
-                        <i class="fa-brands fa-github text-2xl text-slate-400 hover:text-slate-900 cursor-pointer transition"></i>
-                        <i class="fa-brands fa-linkedin text-2xl text-slate-400 hover:text-slate-900 cursor-pointer transition"></i>
-                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Meus Projetos -->
-        <div class="mb-32">
-            <div class="flex items-center gap-4 mb-12">
-                <h2 class="text-3xl font-black tracking-tight text-slate-900">Projetos em <span class="text-indigo-600">Destaque</span></h2>
-                <div class="h-[2px] flex-1 bg-slate-100"></div>
-            </div>
+                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
+                    <div class="flex justify-between items-start mb-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl">
+                            <i class="fa-solid fa-toolbox"></i>
+                        </div>
+                        <span class="text-[9px] font-black text-primary-500 bg-gray-100 px-4 py-1.5 rounded-full uppercase tracking-widest">Service Design</span>
+                    </div>
+                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">Assessoria MEI</h3>
+                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
+                        Um hub estratégico focado na desburocratização. Oferece <span class="text-gray-900 font-bold">ferramentas gratuitas</span>, guias práticos e postagens informativas para transformar a complexidade fiscal em clareza operacional para o microempreendedor.
+                    </p>
+                    <div class="flex flex-wrap gap-3 mb-12">
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Automation</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Content Strategy</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">SEO Optimized</span>
+                    </div>
+                    <a href="https://assessoriamei.com.br" target="_blank" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
+                        Access Knowledge Base <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Contora -->
-                <a href="https://contora.com.br" target="_blank" class="bg-white border border-slate-100 p-8 rounded-[32px] card-hover transition-all block group shadow-sm">
-                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-shop"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Contora ERP</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Um sistema PDV (Ponto de Venda) e ERP completo para gestão empresarial, focado em alta performance e simplicidade.</p>
-                    <div class="text-xs font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
-                        Ver Projeto <i class="fa-solid fa-arrow-right-long"></i>
-                    </div>
-                </a>
-
-                <!-- Assessoria MEI -->
-                <a href="https://assessoriamei.com.br" target="_blank" class="bg-white border border-slate-100 p-8 rounded-[32px] card-hover transition-all block group shadow-sm">
-                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-briefcase"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Assessoria MEI</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Plataforma dedicada a auxiliar Microempreendedores Individuais em sua jornada de regularização e crescimento.</p>
-                    <div class="text-xs font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                        Ver Projeto <i class="fa-solid fa-arrow-right-long"></i>
-                    </div>
-                </a>
-
-                <!-- Bem na Prática -->
-                <a href="https://bemnapratica.com.br" target="_blank" class="bg-white border border-slate-100 p-8 rounded-[32px] card-hover transition-all block group shadow-sm">
-                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6 text-xl group-hover:scale-110 transition">
-                        <i class="fa-solid fa-hand-holding-heart"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Bem na Prática</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Sistema inovador focado em projetos sociais e doações, conectando quem quer ajudar com quem precisa.</p>
-                    <div class="text-xs font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
-                        Ver Projeto <i class="fa-solid fa-arrow-right-long"></i>
-                    </div>
-                </a>
-
-                <!-- Open Gabarito -->
-                <a href="#" class="bg-indigo-50 border border-indigo-100 p-8 rounded-[32px] card-hover transition-all block group shadow-sm">
-                    <div class="w-12 h-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center mb-6 text-xl group-hover:scale-110 transition shadow-sm">
+                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl mb-12">
                         <i class="fa-solid fa-layer-group"></i>
                     </div>
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Open Gabarito</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">A plataforma que você está usando! Engenharia de IA para predição de notas de corte em tempo real.</p>
-                    <div class="text-xs font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
-                        Projeto Atual <i class="fa-solid fa-star text-amber-500"></i>
+                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">Contora ERP</h3>
+                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
+                        Gestão empresarial de alta performance. O foco aqui é a <span class="text-gray-900 font-bold">UX de resultado</span>: transformar processos complexos de PDV e financeiro em interfaces que qualquer lojista domina em minutos.
+                    </p>
+                    <div class="flex flex-wrap gap-3 mb-12">
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Fintech Core</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Real-time DB</span>
                     </div>
+                    <a href="https://contora.com.br" target="_blank" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
+                        Enterprise Solutions <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl mb-12">
+                        <i class="fa-solid fa-hands-holding"></i>
+                    </div>
+                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">Bem na Prática</h3>
+                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
+                        A tecnologia a serviço da empatia. Plataforma de rastreabilidade para doações, garantindo que cada centavo chegue onde é mais necessário com <span class="text-gray-900 font-bold">transparência absoluta</span>.
+                    </p>
+                    <div class="flex flex-wrap gap-3 mb-12">
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Social Tech</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Transparency First</span>
+                    </div>
+                    <a href="https://bemnapratica.com.br" target="_blank" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
+                        Human Impact <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="max-w-7xl mx-auto px-6 mb-40 text-center">
+            <div class="inline-block p-1 mb-10 bg-gray-200 rounded-full">
+                <div class="px-10 py-5 bg-white rounded-full">
+                    <p class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-900">Let's build something significant</p>
+                </div>
+            </div>
+            <h3 class="section-title text-4xl sm:text-6xl font-black text-gray-900 mb-12 uppercase tracking-tighter">Conecte-se com o <span class="text-primary-500">Desenvolvedor</span></h3>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <a href="https://wa.me/5511998833971" target="_blank" class="w-full sm:w-auto px-12 py-5 bg-primary-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl shadow-primary-500/20">
+                    <i class="fa-brands fa-whatsapp mr-2"></i> WhatsApp Direct
+                </a>
+                <a href="https://github.com/GeovaneSMax" target="_blank" class="w-full sm:w-auto px-12 py-5 bg-gray-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl shadow-gray-950/20">
+                    <i class="fa-brands fa-github mr-2"></i> Repository
                 </a>
             </div>
-        </div>
-
-        <!-- Footer -->
-        <footer class="text-center py-12 border-t border-slate-100">
-            <p class="text-slate-400 text-sm">© <?php echo date('Y'); ?> Desenvolvido com ❤️ por Geovane S. Maximiano.</p>
-        </footer>
+        </section>
     </main>
 
-<?php echo getFooter(); ?>
+    <?php echo getFooter(); ?>
+
 </body>
 </html>

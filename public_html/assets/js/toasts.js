@@ -18,10 +18,10 @@ const Toast = {
         
         const toast = document.createElement('div');
         const colors = {
-            success: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-            error: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-            warning: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
-            info: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+            success: 'bg-success-500/10 border-success-500/20 text-success-600',
+            error: 'bg-danger-500/10 border-danger-500/20 text-danger-600',
+            warning: 'bg-amber-500/10 border-amber-500/20 text-amber-600',
+            info: 'bg-primary-500/10 border-primary-500/20 text-primary-600'
         };
         
         const icons = {

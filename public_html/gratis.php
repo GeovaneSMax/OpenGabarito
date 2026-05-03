@@ -15,18 +15,33 @@ require_once __DIR__ . '/../includes/ui_helper.php';
     <meta name="author" content="Geovane S. Maximiano">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334145', 800: '#1e293b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Outfit', sans-serif; background-color: #ffffff; color: #0f172a; }
         .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.05); }
-        .text-gradient { background: linear-gradient(135deg, #4f46e5 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-gradient { background: linear-gradient(135deg, #2563eb 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .animate-float { animation: float 6s ease-in-out infinite; }
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
         .bg-mesh {
-            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-                              radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+            background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.03) 0px, transparent 50%);
         }
     </style>
 </head>
@@ -36,12 +51,12 @@ require_once __DIR__ . '/../includes/ui_helper.php';
     <div class="relative min-h-screen flex items-center justify-center py-20 px-4">
         <!-- Background Orbs -->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-            <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px]"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px]"></div>
+            <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-500/10 rounded-full blur-[120px]"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-success-500/10 rounded-full blur-[120px]"></div>
         </div>
 
         <div class="max-w-5xl mx-auto text-center relative z-10">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-black uppercase tracking-widest mb-8 animate-fade-in shadow-sm">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 border border-primary-100 text-primary-600 text-[10px] font-black uppercase tracking-widest mb-8 animate-fade-in shadow-sm">
                 <i class="fa-solid fa-star"></i> 100% Gratuito de Verdade
             </div>
             
@@ -55,7 +70,7 @@ require_once __DIR__ . '/../includes/ui_helper.php';
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="index.php" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-12 py-6 rounded-[32px] font-black text-lg transition-all shadow-2xl shadow-indigo-500/20 flex items-center justify-center gap-3 uppercase tracking-widest">
+                <a href="index.php" class="w-full sm:w-auto bg-primary-600 hover:bg-primary-500 text-white px-12 py-6 rounded-[32px] font-black text-lg transition-all shadow-2xl shadow-primary-500/20 flex items-center justify-center gap-3 uppercase tracking-widest">
                     <i class="fa-solid fa-trophy"></i> Rankings Ativos
                 </a>
                 <a href="novo_gabarito.php" class="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-900 px-12 py-6 rounded-[32px] font-black text-lg transition-all border border-slate-200 flex items-center justify-center gap-3 uppercase tracking-widest shadow-sm">
@@ -65,18 +80,18 @@ require_once __DIR__ . '/../includes/ui_helper.php';
 
             <!-- Stats Bar -->
             <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20 group hover:border-indigo-200 transition-all">
-                    <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fa-solid fa-bolt"></i></div>
+                <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20 group hover:border-primary-200 transition-all">
+                    <div class="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fa-solid fa-bolt"></i></div>
                     <h3 class="text-slate-900 font-black text-xl mb-3">Velocidade Senior</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">Ranking atualizado em milissegundos após cada novo gabarito enviado.</p>
                 </div>
-                <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20 group hover:border-emerald-200 transition-all">
-                    <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fa-solid fa-brain"></i></div>
+                <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20 group hover:border-success-200 transition-all">
+                    <div class="w-14 h-14 bg-success-50 text-success-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fa-solid fa-brain"></i></div>
                     <h3 class="text-slate-900 font-black text-xl mb-3">IA Preditiva</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">Algoritmos avançados que estimam a nota de corte real baseada na concorrência.</p>
                 </div>
-                <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20 group hover:border-rose-200 transition-all">
-                    <div class="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fa-solid fa-lock-open"></i></div>
+                <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20 group hover:border-danger-200 transition-all">
+                    <div class="w-14 h-14 bg-danger-50 text-danger-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fa-solid fa-lock-open"></i></div>
                     <h3 class="text-slate-900 font-black text-xl mb-3">Sem Paywalls</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">Diferente do De Olho na Vaga, aqui todas as funcionalidades são liberadas.</p>
                 </div>
@@ -87,11 +102,11 @@ require_once __DIR__ . '/../includes/ui_helper.php';
     <!-- Comparativo Section -->
     <section class="py-32 bg-slate-50/50">
         <div class="max-w-4xl mx-auto px-4">
-            <h2 class="text-4xl md:text-5xl font-black text-center text-slate-900 mb-20 tracking-tight">Por que escolher o <span class="text-indigo-600">OpenGabarito?</span></h2>
+            <h2 class="text-4xl md:text-5xl font-black text-center text-slate-900 mb-20 tracking-tight">Por que escolher o <span class="text-primary-600">OpenGabarito?</span></h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-16">
-                <div class="bg-white p-10 rounded-[40px] border border-rose-100 shadow-xl shadow-rose-500/5">
-                    <h3 class="text-rose-600 font-black text-xl flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
+                <div class="bg-white p-10 rounded-[40px] border border-danger-100 shadow-xl shadow-danger-500/5">
+                    <h3 class="text-danger-600 font-black text-xl flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
                         <i class="fa-solid fa-xmark-circle text-2xl"></i> Outros Sites
                     </h3>
                     <ul class="space-y-6">
@@ -106,19 +121,19 @@ require_once __DIR__ . '/../includes/ui_helper.php';
                         </li>
                     </ul>
                 </div>
-                <div class="bg-white p-10 rounded-[40px] border border-emerald-100 shadow-xl shadow-emerald-500/5">
-                    <h3 class="text-emerald-600 font-black text-xl flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
+                <div class="bg-white p-10 rounded-[40px] border border-success-100 shadow-xl shadow-success-500/5">
+                    <h3 class="text-success-600 font-black text-xl flex items-center gap-3 mb-8 uppercase tracking-widest text-sm">
                         <i class="fa-solid fa-check-circle text-2xl"></i> OpenGabarito
                     </h3>
                     <ul class="space-y-6">
                         <li class="flex items-start gap-4 text-slate-900 font-bold">
-                            <i class="fa-solid fa-check mt-1.5 text-emerald-500"></i> <span class="text-sm">Grátis hoje, amanhã e sempre.</span>
+                            <i class="fa-solid fa-check mt-1.5 text-success-500"></i> <span class="text-sm">Grátis hoje, amanhã e sempre.</span>
                         </li>
                         <li class="flex items-start gap-4 text-slate-900 font-bold">
-                            <i class="fa-solid fa-check mt-1.5 text-emerald-500"></i> <span class="text-sm">Posição exata liberada para todos.</span>
+                            <i class="fa-solid fa-check mt-1.5 text-success-500"></i> <span class="text-sm">Posição exata liberada para todos.</span>
                         </li>
                         <li class="flex items-start gap-4 text-slate-900 font-bold">
-                            <i class="fa-solid fa-check mt-1.5 text-emerald-500"></i> <span class="text-sm">Design Premium e fácil de usar.</span>
+                            <i class="fa-solid fa-check mt-1.5 text-success-500"></i> <span class="text-sm">Design Premium e fácil de usar.</span>
                         </li>
                     </ul>
                 </div>
@@ -130,19 +145,19 @@ require_once __DIR__ . '/../includes/ui_helper.php';
     <!-- FAQ / SEO Section -->
     <section class="py-32 px-4">
         <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl font-black text-slate-900 mb-20 text-center tracking-tight">Tudo sobre <span class="text-indigo-600">Ranking de Concursos</span></h2>
+            <h2 class="text-4xl font-black text-slate-900 mb-20 text-center tracking-tight">Tudo sobre <span class="text-primary-600">Ranking de Concursos</span></h2>
             
             <div class="space-y-8">
-                <div class="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group">
-                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-indigo-600 transition-colors">Como funciona o ranking gratuito?</h3>
+                <div class="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all group">
+                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-primary-600 transition-colors">Como funciona o ranking gratuito?</h3>
                     <p class="text-slate-500 leading-relaxed font-medium">O OpenGabarito coleta os gabaritos enviados pelos próprios candidatos e utiliza uma lógica de inteligência coletiva para definir o gabarito de consenso. Com isso, conseguimos calcular sua pontuação e te colocar em um ranking dinâmico.</p>
                 </div>
-                <div class="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group">
-                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-indigo-600 transition-colors">O OpenGabarito é melhor que o De Olho na Vaga?</h3>
+                <div class="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all group">
+                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-primary-600 transition-colors">O OpenGabarito é melhor que o De Olho na Vaga?</h3>
                     <p class="text-slate-500 leading-relaxed font-medium">Nossa missão não é apenas competir, mas oferecer uma alternativa democrática. Enquanto outros sites monetizam o seu desespero por informação, nós oferecemos tecnologia de ponta (IA) e transparência total sem custo.</p>
                 </div>
-                <div class="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group">
-                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-indigo-600 transition-colors">É seguro cadastrar minhas respostas?</h3>
+                <div class="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all group">
+                    <h3 class="text-2xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-primary-600 transition-colors">É seguro cadastrar minhas respostas?</h3>
                     <p class="text-slate-500 leading-relaxed font-medium">Sim! Suas respostas são processadas de forma anônima no ranking público, protegendo sua privacidade enquanto ajudamos a construir a amostragem do concurso.</p>
                 </div>
             </div>

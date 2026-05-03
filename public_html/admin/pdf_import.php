@@ -14,6 +14,21 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
     <meta charset="UTF-8">
     <title>Importador IA de PDF | Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8" },
+                        success: { 400: "#4ade80", 500: "#22c55e", 600: "#16a34a" },
+                        danger: { 500: "#ef4444", 600: "#dc2626" },
+                        slate: { 50: "#f8fafc", 100: "#f1f5f9", 200: "#e2e8f0", 300: "#cbd5e1", 400: "#94a3b8", 500: "#64748b", 600: "#475569", 700: "#334145", 800: "#1e293b", 900: "#0f172a" }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="toasts.js"></script>
@@ -29,7 +44,7 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
         <div class="flex items-center justify-between mb-10">
             <div>
                 <h1 class="text-3xl font-black flex items-center gap-3">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i>
+                    <i class="fa-solid fa-file-pdf text-danger-500"></i>
                     Importador IA de Gabaritos
                 </h1>
                 <p class="text-slate-400">Arraste o PDF e deixe a IA detectar as respostas automaticamente</p>
@@ -42,7 +57,7 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
             <div class="md:col-span-1 space-y-6">
                 <div class="glass-panel rounded-3xl p-6">
                     <label class="block text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">1. Selecionar Cargo</label>
-                    <select id="cargo_id" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="cargo_id" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary-500">
                         <option value="">Escolha...</option>
                         <?php foreach ($cargos as $c): ?>
                             <option value="<?php echo $c['id']; ?>" <?php echo $cargo_id == $c['id'] ? 'selected' : ''; ?>>
@@ -52,10 +67,10 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
                     </select>
                 </div>
 
-                <div id="drop-zone" class="glass-panel rounded-3xl p-8 border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500 transition-all group">
-                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-600 mb-4 group-hover:text-indigo-400 transition"></i>
+                <div id="drop-zone" class="glass-panel rounded-3xl p-8 border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary-500 transition-all group">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-600 mb-4 group-hover:text-primary-400 transition"></i>
                     <p class="text-sm font-bold text-slate-400">Arraste aqui ou</p>
-                    <button type="button" class="mt-4 bg-indigo-600/20 text-indigo-400 px-4 py-2 rounded-xl font-bold text-xs hover:bg-indigo-600 hover:text-white transition">
+                    <button type="button" class="mt-4 bg-primary-600/20 text-primary-400 px-4 py-2 rounded-xl font-bold text-xs hover:bg-primary-600 hover:text-white transition">
                         Selecionar Arquivo PDF
                     </button>
                     <input type="file" id="pdf-file" accept="application/pdf" class="hidden">
@@ -71,17 +86,17 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
                     </div>
 
                     <div id="loading-state" class="hidden flex-1 flex flex-col items-center justify-center space-y-4">
-                        <div class="h-12 w-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-                        <p class="text-indigo-400 font-bold animate-pulse">IA analisando o PDF...</p>
+                        <div class="h-12 w-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
+                        <p class="text-primary-400 font-bold animate-pulse">IA analisando o PDF...</p>
                     </div>
 
                     <div id="success-state" class="hidden flex-1 flex flex-col">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-check-circle text-emerald-500"></i>
+                                <i class="fa-solid fa-check-circle text-success-500"></i>
                                 Extração Concluída
                             </h3>
-                            <div class="bg-indigo-500/20 text-indigo-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest" id="detected-version">
+                            <div class="bg-primary-500/20 text-primary-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest" id="detected-version">
                                 Versão Detectada
                             </div>
                         </div>
@@ -90,7 +105,7 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
                             <!-- JS Generated -->
                         </div>
 
-                        <button id="save-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl transition shadow-xl shadow-emerald-500/20">
+                        <button id="save-btn" class="w-full bg-success-600 hover:bg-success-500 text-white font-black py-4 rounded-2xl transition shadow-xl shadow-success-500/20">
                             Salvar como Gabarito Oficial
                         </button>
                     </div>
@@ -120,11 +135,11 @@ $cargos = $pdo->query("SELECT cg.id, c.nome_orgao, cg.nome_cargo FROM cargos cg 
             }, false);
         });
 
-        dropZone.addEventListener('dragover', () => dropZone.classList.add('border-indigo-500'));
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-indigo-500'));
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('border-primary-500'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-primary-500'));
 
         dropZone.addEventListener('drop', (e) => {
-            dropZone.classList.remove('border-indigo-500');
+            dropZone.classList.remove('border-primary-500');
             const file = e.dataTransfer.files[0];
             handleFile(file);
         });

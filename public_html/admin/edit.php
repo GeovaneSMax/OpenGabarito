@@ -147,6 +147,21 @@ $materias = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Admin | Editar Ranking</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8" },
+                        success: { 400: "#4ade80", 500: "#22c55e", 600: "#16a34a" },
+                        danger: { 500: "#ef4444", 600: "#dc2626" },
+                        slate: { 50: "#f8fafc", 100: "#f1f5f9", 200: "#e2e8f0", 300: "#cbd5e1", 400: "#94a3b8", 500: "#64748b", 600: "#475569", 700: "#334145", 800: "#1e293b", 900: "#0f172a" }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background: #0f172a; color: #f8fafc; }
@@ -164,14 +179,14 @@ $materias = $stmt->fetchAll();
                 <a href="../ranking.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> Voltar
                 </a>
-                <a href="gabarito.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-500/20">
+                <a href="gabarito.php?cargo_id=<?php echo $cargo_id; ?>" class="bg-success-600 hover:bg-success-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-primary-500/20">
                     <i class="fa-solid fa-check-double"></i> Gabarito
                 </a>
             </div>
         </div>
 
         <?php if ($sucesso): ?>
-            <div class="mb-8 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-2xl flex items-center gap-3">
+            <div class="mb-8 bg-success-500/10 border border-success-500/20 text-success-400 p-4 rounded-2xl flex items-center gap-3">
                 <i class="fa-solid fa-circle-check"></i> <?php echo $sucesso; ?>
             </div>
         <?php endif; ?>
@@ -185,7 +200,7 @@ $materias = $stmt->fetchAll();
         <div class="space-y-8">
             <form method="POST" enctype="multipart/form-data" class="space-y-8">
                 <div class="glass-panel rounded-3xl p-8 shadow-2xl">
-                    <h2 class="text-indigo-400 text-xs font-black uppercase tracking-widest mb-6">Dados do Concurso</h2>
+                    <h2 class="text-primary-400 text-xs font-black uppercase tracking-widest mb-6">Dados do Concurso</h2>
                     <?php echo csrfInput(); ?>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -212,7 +227,7 @@ $materias = $stmt->fetchAll();
                 </div>
 
                 <div class="glass-panel rounded-3xl p-8 shadow-2xl">
-                    <h2 class="text-indigo-400 text-xs font-black uppercase tracking-widest mb-6">Dados do Cargo</h2>
+                    <h2 class="text-primary-400 text-xs font-black uppercase tracking-widest mb-6">Dados do Cargo</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Nome do Cargo</label>
@@ -233,13 +248,13 @@ $materias = $stmt->fetchAll();
                     </div>
                 </div>
 
-                <button type="submit" name="update_cargo" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-2xl transition shadow-xl shadow-indigo-500/20 flex items-center justify-center gap-2">
+                <button type="submit" name="update_cargo" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-black py-4 rounded-2xl transition shadow-xl shadow-primary-500/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-save"></i> Salvar Alterações Gerais
                 </button>
             </form>
 
             <div class="glass-panel rounded-3xl p-8 shadow-2xl">
-                <h2 class="text-emerald-400 text-xs font-black uppercase tracking-widest mb-6">Mapeamento de Matérias</h2>
+                <h2 class="text-success-400 text-xs font-black uppercase tracking-widest mb-6">Mapeamento de Matérias</h2>
                 
                 <div class="overflow-x-auto mb-8">
                     <table class="w-full text-left">
@@ -267,7 +282,7 @@ $materias = $stmt->fetchAll();
                                         <form method="POST" style="display:inline;">
                                             <input type="hidden" name="materia_id" value="<?php echo $m['id']; ?>">
                                             <?php echo csrfInput(); ?>
-                                            <button type="submit" name="delete_materia" class="text-rose-500 hover:text-rose-400 transition">
+                                            <button type="submit" name="delete_materia" class="text-danger-500 hover:text-danger-400 transition">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
@@ -301,20 +316,20 @@ $materias = $stmt->fetchAll();
                             </div>
                         </div>
                     </div>
-                    <button type="submit" name="add_materia" class="mt-4 w-full bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/30 font-bold py-2 rounded-xl transition text-xs uppercase tracking-widest">
+                    <button type="submit" name="add_materia" class="mt-4 w-full bg-success-600/20 hover:bg-success-600 text-success-400 hover:text-white border border-success-600/30 font-bold py-2 rounded-xl transition text-xs uppercase tracking-widest">
                         Adicionar Matéria
                     </button>
                 </form>
             </div>
 
-            <div class="p-8 border border-rose-500/20 bg-rose-500/5 rounded-3xl">
-                <h3 class="text-rose-400 font-bold mb-2 flex items-center gap-2">
+            <div class="p-8 border border-danger-500/20 bg-danger-500/5 rounded-3xl">
+                <h3 class="text-danger-400 font-bold mb-2 flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Zona de Perigo
                 </h3>
                 <p class="text-xs text-slate-500 mb-6">Ao deletar este concurso, todos os rankings, cargos e notas de usuários associados serão permanentemente excluídos.</p>
                 
                 <form method="POST" onsubmit="return confirm('TEM CERTEZA? Isso apagará TODAS as notas de todos os usuários deste concurso!')">
-                    <button type="submit" name="delete_concurso_confirm" class="bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition border border-rose-500/30">
+                    <button type="submit" name="delete_concurso_confirm" class="bg-danger-500/10 hover:bg-danger-500 text-danger-500 hover:text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition border border-danger-500/30">
                         Excluir Concurso Permanentemente
                     </button>
                 </form>

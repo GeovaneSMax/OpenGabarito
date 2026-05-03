@@ -97,13 +97,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enviar Gabarito | OpenGabarito</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334145', 800: '#1e293b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
     <script src="assets/js/toasts.js"></script>
     <style>
         body { font-family: 'Outfit', sans-serif; }
-        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.5); }
-        input[type="radio"]:checked + label { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .glass-panel { background: white; border: 1px solid var(--slate-100); }
+        input[type="radio"]:checked + label { background-color: #2563eb; color: white; border-color: #2563eb; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-600 min-h-screen pb-20">
@@ -112,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <a href="index.php" class="flex items-center gap-3">
                 <?php echo getLogoSVG(36); ?>
-                <span class="font-black text-slate-900 tracking-tighter text-xl leading-none">Open<span class="text-indigo-600">Gabarito</span></span>
+                <span class="font-black text-slate-900 tracking-tighter text-xl leading-none">Open<span class="text-primary-600">Gabarito</span></span>
             </a>
             <a href="index.php" class="text-xs font-black text-slate-400 hover:text-slate-900 transition flex items-center gap-2 uppercase tracking-widest">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
@@ -121,18 +136,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </nav>
 
     <main class="max-w-4xl mx-auto px-4">
-        <div class="bg-white rounded-[40px] p-8 md:p-12 shadow-2xl shadow-indigo-500/5 border border-slate-100">
+        <div class="bg-white rounded-[40px] p-8 md:p-12 shadow-2xl shadow-primary-500/5 border border-slate-100">
             <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tight">Enviar Gabarito</h1>
             <p class="text-slate-500 font-medium mb-10 leading-relaxed">Preencha suas respostas conforme o seu caderno de provas para calcular sua nota.</p>
 
             <?php if ($sucesso): ?>
-                <div class="bg-emerald-50 border border-emerald-100 text-emerald-600 p-6 rounded-[24px] mb-8 font-bold flex items-center gap-3 shadow-sm">
+                <div class="bg-success-50 border border-success-100 text-success-600 p-6 rounded-[24px] mb-8 font-bold flex items-center gap-3 shadow-sm">
                     <i class="fa-solid fa-circle-check text-xl"></i>
                     <?php echo $sucesso; ?>
                 </div>
             <?php endif; ?>
             <?php if ($erro): ?>
-                <div class="bg-rose-50 border border-rose-100 text-rose-600 p-6 rounded-[24px] mb-8 font-bold flex items-center gap-3 shadow-sm">
+                <div class="bg-danger-50 border border-danger-100 text-danger-600 p-6 rounded-[24px] mb-8 font-bold flex items-center gap-3 shadow-sm">
                     <i class="fa-solid fa-triangle-exclamation text-xl"></i>
                     <?php echo $erro; ?>
                 </div>
@@ -146,10 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Encontre o Concurso / Cargo</label>
                         <div class="relative group mb-4">
-                            <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors"></i>
-                            <input type="text" id="filtro-concurso" placeholder="Digite para buscar (ex: Correios, INSS, Analista...)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all shadow-sm font-medium">
+                            <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors"></i>
+                            <input type="text" id="filtro-concurso" placeholder="Digite para buscar (ex: Correios, INSS, Analista...)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none transition-all shadow-sm font-medium">
                         </div>
-                        <select name="cargo_id" id="select-cargo" required class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none shadow-sm font-bold appearance-none cursor-pointer">
+                        <select name="cargo_id" id="select-cargo" required class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none shadow-sm font-bold appearance-none cursor-pointer">
                             <option value="">Escolha um concurso da lista filtrada...</option>
                             <?php foreach ($concursos as $c): ?>
                                 <option value="<?php echo $c['cargo_id']; ?>" data-search="<?php echo strtolower($c['nome_orgao'] . ' ' . $c['nome_cargo']); ?>" <?php echo (isset($_GET['cargo_id']) && $_GET['cargo_id'] == $c['cargo_id']) ? 'selected' : ''; ?>>
@@ -176,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </script>
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Versão da Prova</label>
-                        <select name="versao" class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none shadow-sm font-bold appearance-none cursor-pointer">
+                        <select name="versao" class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none shadow-sm font-bold appearance-none cursor-pointer">
                             <option value="1">Versão 1 (Azul / Branca)</option>
                             <option value="2">Versão 2 (Amarela / Verde)</option>
                             <option value="3">Versão 3 (Rosa / Cinza)</option>
@@ -186,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Modalidade da Vaga</label>
-                        <select name="modalidade" required class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none shadow-sm font-bold appearance-none cursor-pointer">
+                        <select name="modalidade" required class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 outline-none shadow-sm font-bold appearance-none cursor-pointer">
                             <option value="ampla">Ampla Concorrência</option>
                             <option value="pcd">PCD (Pessoa com Deficiência)</option>
                             <option value="ppp">PPP (Negros / Pardos)</option>
@@ -195,9 +210,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div id="progresso-container" class="hidden mb-4 bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
-                    <div id="progresso-bar" class="bg-indigo-600 h-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                    <div id="progresso-bar" class="bg-primary-600 h-full transition-all duration-700 ease-out" style="width: 0%"></div>
                 </div>
-                <div id="progresso-texto" class="hidden mb-12 text-[10px] font-black text-indigo-600 uppercase tracking-widest text-center">
+                <div id="progresso-texto" class="hidden mb-12 text-[10px] font-black text-primary-600 uppercase tracking-widest text-center">
                     Aguardando preenchimento...
                 </div>
 
@@ -224,13 +239,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         document.getElementById('progresso-texto').innerText = `${preenchidos} de ${total} questões preenchidas`;
                         
                         if (preenchidos === total) {
-                            document.getElementById('progresso-bar').classList.remove('bg-indigo-500');
-                            document.getElementById('progresso-bar').classList.add('bg-emerald-500');
+                            document.getElementById('progresso-bar').classList.remove('bg-primary-500');
+                            document.getElementById('progresso-bar').classList.add('bg-success-500');
                             document.getElementById('btn-submit').disabled = false;
                             document.getElementById('btn-submit').classList.remove('opacity-50', 'cursor-not-allowed');
                         } else {
-                            document.getElementById('progresso-bar').classList.remove('bg-emerald-500');
-                            document.getElementById('progresso-bar').classList.add('bg-indigo-500');
+                            document.getElementById('progresso-bar').classList.remove('bg-success-500');
+                            document.getElementById('progresso-bar').classList.add('bg-primary-500');
                         }
                     }
 
@@ -261,8 +276,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         for (let i = 1; i <= cargo.total_questoes; i++) {
                             const selecionada = respMap[i] || '';
                             html += `
-                                <div class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col items-center gap-2 group hover:border-indigo-200 transition-all shadow-sm">
-                                    <span class="text-[10px] font-black text-slate-400 group-hover:text-indigo-600 transition-colors tracking-tighter uppercase">Questão ${i}</span>
+                                <div class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-col items-center gap-2 group hover:border-primary-200 transition-all shadow-sm">
+                                    <span class="text-[10px] font-black text-slate-400 group-hover:text-primary-600 transition-colors tracking-tighter uppercase">Questão ${i}</span>
                                     <input type="text" 
                                            name="q[${i}]" 
                                            maxlength="1" 
@@ -270,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                            data-index="${i}"
                                            autocomplete="off"
                                            placeholder="-"
-                                           class="q-input w-full bg-slate-50 border border-slate-100 rounded-xl text-center font-black text-slate-900 uppercase focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none py-3 text-xl transition-all">
+                                           class="q-input w-full bg-slate-50 border border-slate-100 rounded-xl text-center font-black text-slate-900 uppercase focus:ring-4 focus:ring-primary-500/10 focus:border-primary-600 outline-none py-3 text-xl transition-all">
                                 </div>
                             `;
                         }
@@ -313,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </script>
 
                 <div class="mt-16 flex flex-col items-center gap-6">
-                    <button type="submit" id="btn-submit" disabled class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-16 py-6 rounded-[32px] font-black uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/20 opacity-50 cursor-not-allowed text-lg">
+                    <button type="submit" id="btn-submit" disabled class="w-full md:w-auto bg-success-600 hover:bg-success-500 text-white px-16 py-6 rounded-[32px] font-black uppercase tracking-widest transition-all shadow-xl shadow-success-500/20 opacity-50 cursor-not-allowed text-lg">
                         <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Finalizar & Enviar Gabarito
                     </button>
                     <p class="text-[10px] text-slate-400 font-medium italic text-center max-w-sm">

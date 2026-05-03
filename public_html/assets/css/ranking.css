@@ -2,36 +2,44 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
 
 :root {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --secondary: #10b981;
-    --dark-bg: #f8fafc; 
-    --glass: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(226, 232, 240, 0.5);
+    --primary-400: #60a5fa;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+
+    --success-400: #4ade80;
+    --success-500: #22c55e;
+    --success-600: #16a34a;
+
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-600: #475569;
+    --slate-900: #0f172a;
+
+    --danger-500: #ef4444;
+    --danger-600: #dc2626;
 }
 
 body {
     font-family: 'Outfit', sans-serif;
-    background-color: var(--dark-bg);
+    background-color: var(--slate-50);
 }
 
 .glass-card {
     background: white;
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--slate-100);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .glass-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    border-color: var(--primary-600);
 }
 
 .stat-value {
-    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--slate-900);
 }
 
 .tab-btn {
@@ -44,14 +52,14 @@ body {
 
 .tab-btn.active {
     background: white;
-    color: var(--primary);
+    color: var(--primary-600);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    border-color: var(--primary);
+    border-color: var(--primary-600);
 }
 
 .tab-btn:not(.active):hover {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: var(--glass-border);
+    background: #ffffff;
+    border-color: var(--slate-100);
 }
 
 .ranking-table tr {
@@ -65,7 +73,7 @@ body {
 .sticky-col {
     position: sticky;
     left: 0;
-    background: #ffffff;
+    background: white;
     z-index: 10;
 }
 
@@ -77,8 +85,8 @@ body {
     text-transform: uppercase;
 }
 
-.badge-success { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
-.badge-primary { background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.2); }
+.badge-success { background: rgba(34, 197, 94, 0.1); color: var(--success-500); border: 1px solid rgba(34, 197, 94, 0.2); }
+.badge-primary { background: rgba(37, 99, 235, 0.1); color: var(--primary-600); border: 1px solid rgba(37, 99, 235, 0.2); }
 
 /* Animation */
 @keyframes fadeIn {

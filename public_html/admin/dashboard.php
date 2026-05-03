@@ -22,6 +22,21 @@ $concursos = $pdo->query("SELECT c.*,
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Geral Admin | OpenGabarito</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334145', 800: '#1e293b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background: #0f172a; color: #f8fafc; }
@@ -44,7 +59,7 @@ $concursos = $pdo->query("SELECT c.*,
                         </span>
                     <?php endif; ?>
                 </a>
-                <a href="suggestions.php" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                <a href="suggestions.php" class="bg-success-600 hover:bg-success-500 text-white px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
                     <i class="fa-solid fa-lightbulb"></i> Ver Sugestões
                 </a>
                 <a href="../index.php" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition">Voltar ao Site</a>
@@ -56,7 +71,7 @@ $concursos = $pdo->query("SELECT c.*,
             <?php foreach ($concursos as $c): ?>
                 <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div class="flex items-center gap-6 w-full md:w-auto">
-                        <div class="h-16 w-16 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-2xl shrink-0">
+                        <div class="h-16 w-16 rounded-2xl bg-primary-500/10 text-primary-400 border border-primary-500/20 flex items-center justify-center text-2xl shrink-0">
                             <i class="fa-solid <?php echo $c['icon']; ?>"></i>
                         </div>
                         <div>

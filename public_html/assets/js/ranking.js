@@ -53,11 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasets: [{
                     label: 'Candidatos',
                     data: window.rankingData,
-                    backgroundColor: 'rgba(99, 102, 241, 0.5)',
-                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: '#3b82f6',
                     borderWidth: 2,
                     borderRadius: 4,
-                    hoverBackgroundColor: '#6366f1'
+                    hoverBackgroundColor: '#3b82f6'
                 }]
             },
             options: {
@@ -102,9 +102,9 @@ function scrollToUser() {
     const userRow = document.getElementById('my-rank-row');
     if (userRow) {
         userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        userRow.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-500/20');
+        userRow.classList.add('ring-2', 'ring-primary-500', 'bg-primary-500/20');
         setTimeout(() => {
-            userRow.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-500/20');
+            userRow.classList.remove('ring-2', 'ring-primary-500', 'bg-primary-500/20');
         }, 2000);
     } else {
         alert('Você ainda não possui nota cadastrada neste ranking.');

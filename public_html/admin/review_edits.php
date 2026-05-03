@@ -20,6 +20,21 @@ $pendentes = $stmt->fetchAll();
     <meta charset="UTF-8">
     <title>Moderação Wiki | OpenGabarito Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8" },
+                        success: { 400: "#4ade80", 500: "#22c55e", 600: "#16a34a" },
+                        danger: { 500: "#ef4444", 600: "#dc2626" },
+                        slate: { 50: "#f8fafc", 100: "#f1f5f9", 200: "#e2e8f0", 300: "#cbd5e1", 400: "#94a3b8", 500: "#64748b", 600: "#475569", 700: "#334145", 800: "#1e293b", 900: "#0f172a" }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background: #0f172a; color: #f8fafc; }
@@ -42,7 +57,7 @@ $pendentes = $stmt->fetchAll();
 
         <?php if (empty($pendentes)): ?>
             <div class="glass-panel rounded-3xl p-20 text-center">
-                <i class="fa-solid fa-circle-check text-6xl text-emerald-500 mb-6"></i>
+                <i class="fa-solid fa-circle-check text-6xl text-success-500 mb-6"></i>
                 <h2 class="text-2xl font-bold text-white mb-2">Tudo limpo!</h2>
                 <p class="text-slate-500">Não há edições pendentes para revisão no momento.</p>
             </div>
@@ -55,14 +70,14 @@ $pendentes = $stmt->fetchAll();
                     <div class="flex-grow">
                         <!-- Cabeçalho do Colaborador -->
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center text-white font-black">
+                            <div class="w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white font-black">
                                 <?php echo substr($p['usuario_nome'], 0, 1); ?>
                             </div>
                             <div>
                                 <div class="text-lg font-bold text-white"><?php echo htmlspecialchars($p['usuario_nome']); ?></div>
                                 <div class="text-xs text-slate-400 font-medium">
                                     Trust Score: <span class="text-amber-500 font-bold"><?php echo $p['trust_score']; ?></span> • 
-                                    IA Confidence: <span class="text-emerald-500 font-bold"><?php echo $p['score_ia']; ?>%</span>
+                                    IA Confidence: <span class="text-success-500 font-bold"><?php echo $p['score_ia']; ?>%</span>
                                 </div>
                             </div>
                         </div>
@@ -79,7 +94,7 @@ $pendentes = $stmt->fetchAll();
                                 </div>
                             </div>
                             <div class="border-l border-slate-800 pl-6">
-                                <h4 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-4">Proposta de Alteração</h4>
+                                <h4 class="text-[10px] font-black text-success-500 uppercase tracking-widest mb-4">Proposta de Alteração</h4>
                                 <div class="space-y-2 text-sm">
                                     <p><span class="text-slate-500">Órgão:</span> <span class="<?php echo ($novos['nome_orgao'] != ($antigos['nome_orgao'] ?? '')) ? 'diff-added' : ''; ?>"><?php echo htmlspecialchars($novos['nome_orgao']); ?></span></p>
                                     <p><span class="text-slate-500">Banca:</span> <span class="<?php echo ($novos['banca'] != ($antigos['banca'] ?? '')) ? 'diff-added' : ''; ?>"><?php echo htmlspecialchars($novos['banca']); ?></span></p>
@@ -100,13 +115,13 @@ $pendentes = $stmt->fetchAll();
                     <div class="flex flex-col gap-3 shrink-0 justify-center">
                         <form action="approve_edit.php" method="POST">
                             <input type="hidden" name="log_id" value="<?php echo $p['id']; ?>">
-                            <button type="submit" name="acao" value="aprovar" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                            <button type="submit" name="acao" value="aprovar" class="w-full bg-success-600 hover:bg-success-500 text-white px-8 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-check"></i> Aprovar
                             </button>
                         </form>
                         <form action="approve_edit.php" method="POST">
                             <input type="hidden" name="log_id" value="<?php echo $p['id']; ?>">
-                            <button type="submit" name="acao" value="rejeitar" class="w-full bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 px-8 py-3 rounded-xl font-bold transition border border-rose-500/20 flex items-center justify-center gap-2">
+                            <button type="submit" name="acao" value="rejeitar" class="w-full bg-danger-600/10 hover:bg-danger-600/20 text-danger-500 px-8 py-3 rounded-xl font-bold transition border border-danger-500/20 flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-xmark"></i> Rejeitar
                             </button>
                         </form>

@@ -21,6 +21,21 @@ $sugestoes = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sugestões e Atualizações | OpenGabarito Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8" },
+                        success: { 400: "#4ade80", 500: "#22c55e", 600: "#16a34a" },
+                        danger: { 500: "#ef4444", 600: "#dc2626" },
+                        slate: { 50: "#f8fafc", 100: "#f1f5f9", 200: "#e2e8f0", 300: "#cbd5e1", 400: "#94a3b8", 500: "#64748b", 600: "#475569", 700: "#334145", 800: "#1e293b", 900: "#0f172a" }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background: #0f172a; color: #f8fafc; }
@@ -49,14 +64,14 @@ $sugestoes = $stmt->fetchAll();
             <?php else: foreach ($sugestoes as $s): 
                 $tipo_labels = [
                     'geral' => ['label' => 'Sugestão Geral', 'color' => 'bg-slate-800 text-slate-400'],
-                    'nomeacao' => ['label' => 'Nomeação', 'color' => 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'],
-                    'lista_atualizada' => ['label' => 'Lista Atualizada', 'color' => 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'],
+                    'nomeacao' => ['label' => 'Nomeação', 'color' => 'bg-success-500/10 text-success-400 border-success-500/20'],
+                    'lista_atualizada' => ['label' => 'Lista Atualizada', 'color' => 'bg-primary-500/10 text-primary-400 border-primary-500/20'],
                     'homologacao' => ['label' => 'Homologação', 'color' => 'bg-amber-500/10 text-amber-400 border-amber-500/20'],
                     'outro' => ['label' => 'Outro', 'color' => 'bg-slate-700 text-slate-300']
                 ];
                 $tipo_info = $tipo_labels[$s['tipo']] ?? $tipo_labels['outro'];
             ?>
-                <div class="glass-panel rounded-3xl p-6 border-l-4 <?php echo ($s['tipo'] == 'geral' ? 'border-slate-700' : 'border-indigo-500'); ?> hover:scale-[1.01] transition-all">
+                <div class="glass-panel rounded-3xl p-6 border-l-4 <?php echo ($s['tipo'] == 'geral' ? 'border-slate-700' : 'border-primary-500'); ?> hover:scale-[1.01] transition-all">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-xs font-black text-white uppercase">
@@ -76,8 +91,8 @@ $sugestoes = $stmt->fetchAll();
                         </div>
 
                         <?php if ($s['nome_orgao']): ?>
-                            <div class="bg-indigo-500/5 px-4 py-2 rounded-xl border border-indigo-500/10 text-right">
-                                <span class="text-[8px] text-indigo-400 font-black uppercase tracking-widest block">Concurso Relacionado</span>
+                            <div class="bg-primary-500/5 px-4 py-2 rounded-xl border border-primary-500/10 text-right">
+                                <span class="text-[8px] text-primary-400 font-black uppercase tracking-widest block">Concurso Relacionado</span>
                                 <span class="text-xs font-bold text-white"><?php echo htmlspecialchars($s['nome_orgao']); ?></span>
                             </div>
                         <?php endif; ?>
