@@ -215,7 +215,7 @@ try {
                         primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
                         success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
                         danger: { 500: '#ef4444', 600: '#dc2626' },
-                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334145', 800: '#1e293b', 900: '#0f172a' }
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' }
                     }
                 }
             }
@@ -223,7 +223,10 @@ try {
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="assets/css/ranking.css" rel="stylesheet">
+    <link href="assets/css/chat.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/picmo@latest/dist/umd/picmo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@picmo/popup-picker@latest/dist/umd/picmo-popup.js"></script>
     <script src="assets/js/toasts.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-600 min-h-screen pb-20 overflow-x-hidden">
@@ -493,29 +496,79 @@ try {
         </script>
 
 
-        <!-- Ranking Section -->
-        <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden animate-fade-in shadow-xl" style="animation-delay: 0.2s;">
-            
-            <!-- Table Controls -->
-            <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50">
-                <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=geral" class="tab-btn <?php echo $modalidade_filtro == 'geral' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Geral</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=ampla" class="tab-btn <?php echo $modalidade_filtro == 'ampla' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Ampla</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=pcd" class="tab-btn <?php echo $modalidade_filtro == 'pcd' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">PCD</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=ppp" class="tab-btn <?php echo $modalidade_filtro == 'ppp' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">PPP</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=hipossuficiente" class="tab-btn <?php echo $modalidade_filtro == 'hipossuficiente' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Hipo</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=indigena" class="tab-btn <?php echo $modalidade_filtro == 'indigena' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">IND</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=trans" class="tab-btn <?php echo $modalidade_filtro == 'trans' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Trans</a>
-                    <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=quilombola" class="tab-btn <?php echo $modalidade_filtro == 'quilombola' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">QUI</a>
-                </div>
-                <div class="relative w-full md:w-80">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                    <input type="text" id="search-candidate" placeholder="Buscar candidato..." 
-                           class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary-500 outline-none transition shadow-sm">
+            <!-- Chat / Debate Section (Trigger) -->
+            <div class="mb-6 px-2 md:px-0">
+                <button onclick="toggleChat()" class="w-full bg-white hover:bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center justify-between transition shadow-sm group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-primary-100 text-primary-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-comments"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="text-sm font-black text-slate-900 uppercase italic">Debate da Galera (<span id="chat-count">...</span>)</h3>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Clique para abrir ou fechar o debate</p>
+                        </div>
+                    </div>
+                    <i id="chat-chevron" class="fa-solid fa-chevron-down text-slate-300 transition-transform"></i>
+                </button>
+
+                <div id="chat-container" class="chat-container mt-4" style="display: none;">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/50">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Espaço de Debate</span>
+                        <button onclick="toggleChat()" class="text-slate-400 hover:text-danger-500 transition">
+                            <i class="fa-solid fa-circle-minus"></i> Minimizar
+                        </button>
+                    </div>
+                    <div id="chat-pagination" class="pagination-chat">
+                        <!-- Paginação será carregada aqui -->
+                    </div>
+                    <div id="chat-messages" class="chat-messages">
+                        <!-- Mensagens serão carregadas aqui -->
+                    </div>
+
+                    <div class="chat-input-area">
+                        <?php if (isLoggedIn()): ?>
+                            <form id="chat-form" class="chat-form">
+                                <?php echo csrfInput(); ?>
+                                <input type="hidden" name="cargo_id" value="<?php echo $cargo_id; ?>">
+                                <input type="hidden" name="concurso_id" value="<?php echo $concurso_id; ?>">
+                                <input type="text" id="chat-input" name="mensagem" class="chat-input" placeholder="Digite sua mensagem..." autocomplete="off">
+                                <button type="submit" class="send-btn">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        <?php else: ?>
+                            <div class="bg-slate-100 rounded-2xl p-4 text-center">
+                                <p class="text-sm text-slate-500 mb-3">Você precisa estar logado para participar do debate.</p>
+                                <a href="login.php" class="inline-block bg-primary-600 text-white px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-500/20">Fazer Login</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 
-            <div class="p-6">
+            <!-- Ranking Section -->
+            <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden animate-fade-in shadow-xl" style="animation-delay: 0.2s;">
+                
+                <!-- Table Controls -->
+                <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50">
+                    <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=geral" class="tab-btn <?php echo $modalidade_filtro == 'geral' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Geral</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=ampla" class="tab-btn <?php echo $modalidade_filtro == 'ampla' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Ampla</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=pcd" class="tab-btn <?php echo $modalidade_filtro == 'pcd' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">PCD</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=ppp" class="tab-btn <?php echo $modalidade_filtro == 'ppp' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">PPP</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=hipossuficiente" class="tab-btn <?php echo $modalidade_filtro == 'hipossuficiente' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Hipo</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=indigena" class="tab-btn <?php echo $modalidade_filtro == 'indigena' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">IND</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=trans" class="tab-btn <?php echo $modalidade_filtro == 'trans' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">Trans</a>
+                        <a href="?cargo_id=<?php echo $cargo_id; ?>&modalidade=quilombola" class="tab-btn <?php echo $modalidade_filtro == 'quilombola' ? 'active' : ''; ?> text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl transition font-black">QUI</a>
+                    </div>
+                    <div class="relative w-full md:w-80">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="search-candidate" placeholder="Buscar candidato..." 
+                               class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary-500 outline-none transition shadow-sm">
+                    </div>
+                </div>
+
+                <div class="p-6">
                 <button onclick="scrollToUser()" class="mb-6 w-full md:w-auto bg-slate-50 hover:bg-white border border-slate-200 text-slate-900 text-[10px] font-black py-4 px-8 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow-primary-500/10 active:scale-95 group">
                     <i class="fa-solid fa-location-crosshairs text-primary-600 group-hover:rotate-90 transition-transform duration-500"></i> 
                     ENCONTRAR MINHA POSIÇÃO NO RANKING
@@ -625,6 +678,8 @@ try {
                 </div>
             </div>
         </div>
+
+
     </main>
 
 <?php echo getFooter(); ?>
@@ -735,6 +790,169 @@ try {
                 // Limpar a URL sem recarregar
                 window.history.replaceState({}, document.title, window.location.pathname + "?cargo_id=<?php echo $cargo_id; ?>");
             }
+
+            // --- Lógica do Chat ---
+            const chatMessages = document.getElementById('chat-messages');
+            const chatPagination = document.getElementById('chat-pagination');
+            const chatContainer = document.getElementById('chat-container');
+            const chatChevron = document.getElementById('chat-chevron');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const cargoId = <?php echo $cargo_id; ?>;
+            const concursoId = <?php echo $concurso_id; ?>;
+            const currentUserId = <?php echo $_SESSION['usuario_id'] ?? 'null'; ?>;
+            
+            let currentPage = 1;
+            let isChatOpen = false;
+
+            window.toggleChat = () => {
+                const container = document.getElementById('chat-container');
+                const chevron = document.getElementById('chat-chevron');
+                if (!container) return;
+                
+                isChatOpen = !isChatOpen;
+                container.classList.toggle('active', isChatOpen);
+                container.style.display = isChatOpen ? 'flex' : 'none';
+                if (chevron) chevron.style.transform = isChatOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+                
+                if (isChatOpen) {
+                    loadMessages(currentPage);
+                }
+            };
+
+            async function loadMessages(page = 1) {
+                if (!isChatOpen) return;
+                currentPage = page;
+                try {
+                    const response = await fetch(`api/chat.php?action=list&cargo_id=${cargoId}&page=${page}`);
+                    const result = await response.json();
+                    if (result.success) {
+                        renderMessages(result.data);
+                        renderPagination(result.pagination);
+                    } else {
+                        chatMessages.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-danger-500 italic">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                            ${result.message}
+                        </div>`;
+                    }
+                } catch (err) {
+                    console.error('Erro ao carregar mensagens:', err);
+                    chatMessages.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-danger-500 italic">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                        Erro ao carregar o chat.
+                    </div>`;
+                }
+            }
+
+            function renderMessages(messages) {
+                if (!messages || messages.length === 0) {
+                    chatMessages.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-400 italic">
+                        <i class="fa-solid fa-comments-slash text-3xl mb-2 opacity-20"></i>
+                        Chat vazio. Seja o primeiro a comentar!
+                    </div>`;
+                    return;
+                }
+
+                const getUserColor = (id) => {
+                    const colors = [
+                        '#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', 
+                        '#db2777', '#0891b2', '#4f46e5', '#9333ea', '#be185d'
+                    ];
+                    return colors[id % colors.length];
+                };
+
+                const html = messages.map(m => {
+                    const isMe = m.is_me;
+                    const userColor = getUserColor(m.usuario_id);
+                    return `
+                        <div class="message-bubble ${isMe ? 'message-sent' : 'message-received'}" data-id="${m.id}">
+                            <div class="message-info">
+                                <img src="${m.foto_perfil || 'assets/img/default-avatar.png'}" class="message-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${m.nome}&background=random'">
+                                <span class="font-bold" style="color: ${isMe ? 'inherit' : userColor}">${m.nome}</span>
+                                ${m.trust_score >= 80 ? '<i class="fa-solid fa-shield-check text-[8px] text-amber-500"></i>' : ''}
+                            </div>
+                            <div class="message-text">${m.mensagem}</div>
+                            <div class="message-time">${new Date(m.criado_em).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                chatMessages.innerHTML = html;
+                // Não scrollar automaticamente se estivermos vendo páginas antigas
+                if (currentPage === 1) {
+                    // chatMessages.scrollTop = chatMessages.scrollHeight; // Se recentes estiverem embaixo
+                    chatMessages.scrollTop = 0; // Se recentes estiverem no topo
+                }
+            }
+
+            function renderPagination(pagination) {
+                if (pagination.total_pages <= 1) {
+                    chatPagination.innerHTML = '';
+                    return;
+                }
+
+                let html = '';
+                for (let i = 1; i <= pagination.total_pages; i++) {
+                    html += `
+                        <button class="page-btn ${i === pagination.current_page ? 'active' : ''}" onclick="loadMessages(${i})">
+                            ${i}
+                        </button>
+                    `;
+                }
+                chatPagination.innerHTML = html;
+            }
+
+            if (chatForm) {
+                chatForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const msg = chatInput.value.trim();
+                    if (!msg) return;
+
+                    chatInput.value = '';
+                    try {
+                        const csrfToken = chatForm.querySelector('input[name="csrf_token"]').value;
+                        const response = await fetch('api/chat.php?action=send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `cargo_id=${cargoId}&concurso_id=${concursoId}&mensagem=${encodeURIComponent(msg)}&csrf_token=${csrfToken}`
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            if (currentPage === 1) loadMessages(1);
+                            else Toast.show('Mensagem enviada!', 'success');
+                        } else {
+                            Toast.show(result.message, 'error');
+                        }
+                    } catch (err) {
+                        Toast.show('Erro ao enviar mensagem', 'error');
+                    }
+                });
+
+                }
+
+                // Buscar contagem inicial
+                async function updateCount() {
+                    try {
+                        const response = await fetch(`api/chat.php?action=list&cargo_id=${cargoId}&limit=1`);
+                        const result = await response.json();
+                        if (result.success) {
+                            document.getElementById('chat-count').innerText = result.pagination.total_items;
+                        }
+                    } catch (err) {
+                        document.getElementById('chat-count').innerText = '0';
+                    }
+                }
+
+                updateCount();
+
+                // Polling
+                setInterval(() => {
+                    if (isChatOpen && currentPage === 1) {
+                        loadMessages(1);
+                    } else if (!isChatOpen) {
+                        updateCount();
+                    }
+                }, 10000); 
         });
     </script>
 

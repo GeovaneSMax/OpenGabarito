@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/ui_helper.php';
 ?>
 <!DOCTYPE html>
@@ -7,7 +8,7 @@ require_once __DIR__ . '/../includes/ui_helper.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geovane S. Maximiano | Fullstack Developer & Concurseiro</title>
+    <title>Sobre | Geovane S. Maximiano</title>
     
     <link rel="icon" href="data:image/svg+xml,<?php echo rawurlencode(getLogoSVG(40)); ?>">
     
@@ -18,147 +19,185 @@ require_once __DIR__ . '/../includes/ui_helper.php';
             theme: {
                 extend: {
                     colors: {
-                        primary: { 500: '#0f172a', 600: '#1f2937' },
-                        gray: { 50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db', 400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151', 800: '#1f2937', 900: '#111827', 950: '#0a0a0a' }
+                        primary: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        success: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 500: '#ef4444', 600: '#dc2626' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' },
+                        vibrant: {
+                            pink: '#ec4899',
+                            purple: '#a855f7',
+                            blue: '#3b82f6',
+                            cyan: '#06b6d4',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e'
+                        }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace'],
-                        serif: ['Crimson Pro', 'serif'],
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '2.5rem',
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+                            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
                     }
                 }
             }
         }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --primary-primary: #0f172a; }
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #111827; overflow-x: hidden; }
+        body { font-family: 'Outfit', sans-serif; background-color: #fafafa; color: #1f2937; overflow-x: hidden; }
+        .font-outfit { font-family: 'Outfit', sans-serif; }
         
-        .text-balance { text-wrap: balance; }
-        
-        .section-title { font-family: 'Outfit', sans-serif; }
+        .mesh-gradient {
+            background-color: #fafafa;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.1) 0px, transparent 50%);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card-glow-pink:hover { box-shadow: 0 20px 40px -15px rgba(236, 72, 153, 0.3); }
+        .card-glow-blue:hover { box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.3); }
+        .card-glow-purple:hover { box-shadow: 0 20px 40px -15px rgba(168, 85, 247, 0.3); }
+        .card-glow-amber:hover { box-shadow: 0 20px 40px -15px rgba(245, 158, 11, 0.3); }
+
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right, #6366f1, #ec4899, #f59e0b);
+        }
     </style>
 </head>
-<body>
+<body class="mesh-gradient min-h-screen">
 
-    <main class="relative pt-32">
-        <section class="max-w-4xl mx-auto px-6 mb-20 text-center">
-            <h1 class="section-title text-5xl lg:text-7xl font-black text-gray-900 leading-tight mb-8 text-balance">
-                "O verdadeiro poder do código reside em sua capacidade de ser <span class="text-primary-500">aberto</span>, <span class="text-gray-600">colaborativo</span> e <span class="text-primary-500">livre</span>."
+    <?php echo getNav(); ?>
+
+    <main class="relative pt-20 pb-32 px-6">
+        <!-- Floating Blobs for decoration -->
+        <div class="fixed top-20 left-[-10%] w-96 h-96 bg-vibrant-purple/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+        <div class="fixed bottom-20 right-[-10%] w-96 h-96 bg-vibrant-pink/20 rounded-full blur-[100px] animate-pulse-slow" style="animation-delay: 2s;"></div>
+
+        <!-- Hero Section -->
+        <section class="max-w-5xl mx-auto text-center mb-32 relative">
+            <div class="inline-block px-6 py-2 rounded-full bg-white/50 border border-white/50 backdrop-blur-md mb-8 shadow-sm">
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-vibrant-purple">Manifesto Tecnológico</span>
+            </div>
+            <h1 class="font-outfit text-4xl md:text-6xl lg:text-7xl font-black leading-tight mb-12 text-slate-900 tracking-tight">
+                "Tecnologia <span class="text-gradient">aberta e transparente</span>: por um mundo onde o conhecimento pertence a todos."
             </h1>
-            <p class="text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                Acreditamos na força da comunidade e na inovação impulsionada pelo compartilhamento.
-            </p>
+            
+            <div class="flex flex-col items-center gap-4">
+                <div class="w-24 h-[2px] bg-gradient-to-right from-transparent via-vibrant-pink to-transparent"></div>
+                <h2 class="font-outfit text-2xl md:text-3xl font-bold text-slate-800">
+                    Geovane S. Maximiano
+                </h2>
+                <p class="text-slate-500 font-medium">Software Developer</p>
+            </div>
         </section>
 
-        <!-- Ecosystem: The Multi-Project Strategy -->
-        <section id="projects" class="max-w-7xl mx-auto px-6 mb-40">
-            <div class="flex flex-col md:flex-row items-end justify-between gap-8 mb-20">
-                <div class="max-w-xl">
-                    <h2 class="section-title text-4xl font-black text-gray-900 mb-6 uppercase tracking-tighter">Meus <span class="text-primary-500">Projetos</span></h2>
-                    <p class="text-gray-500 leading-relaxed italic">
-                        De soluções empresariais a impacto social, cada projeto é uma peça de um quebra-cabeça tecnológico voltado para a eficiência e o bem comum.
-                    </p>
-                </div>
+        <!-- Projects Grid -->
+        <section class="max-w-6xl mx-auto relative">
+            <div class="flex items-center gap-4 mb-16">
+                <div class="h-[1px] flex-grow bg-slate-200"></div>
+                <h3 class="font-outfit text-xs font-black uppercase tracking-[0.4em] text-slate-400">Meus Projetos</h3>
+                <div class="h-[1px] flex-grow bg-slate-200"></div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
-                    <div class="flex justify-between items-start mb-12">
-                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl">
-                            <i class="fa-solid fa-graduation-cap"></i>
-                        </div>
-                        <span class="text-[9px] font-black text-primary-500 bg-gray-100 px-4 py-1.5 rounded-full uppercase tracking-widest">Flagship Product</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- OpenGabarito -->
+                <div class="glass p-10 rounded-[2.5rem] card-glow-purple transition-all duration-500 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-vibrant-purple to-vibrant-blue rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg mb-8 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-graduation-cap"></i>
                     </div>
-                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">OpenGabarito</h3>
-                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
-                        Plataforma colaborativa que revoluciona o acompanhamento de concursos públicos. Através de <span class="text-gray-900 font-bold">inteligência coletiva</span> e modelos preditivos em <span class="text-gray-900 font-bold">IA</span>, o sistema processa milhares de dados para entregar transparência e precisão em rankings.
+                    <h4 class="font-outfit text-3xl font-black text-slate-900 mb-4 tracking-tight">OpenGabarito</h4>
+                    <p class="text-slate-500 leading-relaxed mb-8">
+                        Revolucionando o acompanhamento de concursos através da inteligência coletiva e transparência absoluta nos rankings.
                     </p>
-                    <div class="flex flex-wrap gap-3 mb-12">
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">PHP 8.2</span>
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Tailwind Engine</span>
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Groq / Gemini AI</span>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-purple uppercase tracking-wider border border-purple-100 shadow-sm">HTML</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-blue uppercase tracking-wider border border-blue-100 shadow-sm">JavaScript</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-pink uppercase tracking-wider border border-pink-100 shadow-sm">PHP</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-cyan uppercase tracking-wider border border-cyan-100 shadow-sm">CSS</span>
                     </div>
-                    <a href="index.php" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
-                        Launch Application <i class="fa-solid fa-arrow-right"></i>
-                    </a>
                 </div>
 
-                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
-                    <div class="flex justify-between items-start mb-12">
-                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl">
-                            <i class="fa-solid fa-toolbox"></i>
-                        </div>
-                        <span class="text-[9px] font-black text-primary-500 bg-gray-100 px-4 py-1.5 rounded-full uppercase tracking-widest">Service Design</span>
+                <!-- Assessoria MEI -->
+                <div class="glass p-10 rounded-[2.5rem] card-glow-pink transition-all duration-500 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-vibrant-pink to-vibrant-rose rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg mb-8 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-toolbox"></i>
                     </div>
-                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">Assessoria MEI</h3>
-                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
-                        Um hub estratégico focado na desburocratização. Oferece <span class="text-gray-900 font-bold">ferramentas gratuitas</span>, guias práticos e postagens informativas para transformar a complexidade fiscal em clareza operacional para o microempreendedor.
+                    <h4 class="font-outfit text-3xl font-black text-slate-900 mb-4 tracking-tight">Assessoria MEI</h4>
+                    <p class="text-slate-500 leading-relaxed mb-8">
+                        Hub estratégico para microempreendedores, simplificando a burocracia e potencializando pequenos negócios.
                     </p>
-                    <div class="flex flex-wrap gap-3 mb-12">
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Automation</span>
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Content Strategy</span>
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">SEO Optimized</span>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-purple uppercase tracking-wider border border-purple-100 shadow-sm">HTML</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-blue uppercase tracking-wider border border-blue-100 shadow-sm">JavaScript</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-pink uppercase tracking-wider border border-pink-100 shadow-sm">PHP</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-cyan uppercase tracking-wider border border-cyan-100 shadow-sm">CSS</span>
                     </div>
-                    <a href="https://assessoriamei.com.br" target="_blank" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
-                        Access Knowledge Base <i class="fa-solid fa-arrow-right"></i>
-                    </a>
                 </div>
 
-                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
-                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl mb-12">
+                <!-- Contora ERP -->
+                <div class="glass p-10 rounded-[2.5rem] card-glow-amber transition-all duration-500 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-vibrant-amber to-vibrant-pink rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg mb-8 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-layer-group"></i>
                     </div>
-                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">Contora ERP</h3>
-                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
-                        Gestão empresarial de alta performance. O foco aqui é a <span class="text-gray-900 font-bold">UX de resultado</span>: transformar processos complexos de PDV e financeiro em interfaces que qualquer lojista domina em minutos.
+                    <h4 class="font-outfit text-3xl font-black text-slate-900 mb-4 tracking-tight">Contora ERP</h4>
+                    <p class="text-slate-500 leading-relaxed mb-8">
+                        Gestão empresarial de alta performance focada em experiência do usuário e eficiência operacional em tempo real.
                     </p>
-                    <div class="flex flex-wrap gap-3 mb-12">
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Fintech Core</span>
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Real-time DB</span>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-purple uppercase tracking-wider border border-purple-100 shadow-sm">HTML</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-blue uppercase tracking-wider border border-blue-100 shadow-sm">JavaScript</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-pink uppercase tracking-wider border border-pink-100 shadow-sm">PHP</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-cyan uppercase tracking-wider border border-cyan-100 shadow-sm">CSS</span>
                     </div>
-                    <a href="https://contora.com.br" target="_blank" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
-                        Enterprise Solutions <i class="fa-solid fa-arrow-right"></i>
-                    </a>
                 </div>
 
-                <div class="bg-white p-12 rounded-[3rem] shadow-lg border border-gray-100 group">
-                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-primary-500 text-3xl mb-12">
+                <!-- Bem na Prática -->
+                <div class="glass p-10 rounded-[2.5rem] card-glow-blue transition-all duration-500 group">
+                    <div class="w-14 h-14 bg-gradient-to-br from-vibrant-blue to-vibrant-cyan rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg mb-8 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-hands-holding"></i>
                     </div>
-                    <h3 class="section-title text-3xl font-black text-gray-900 mb-6 uppercase tracking-tight">Bem na Prática</h3>
-                    <p class="text-gray-500 leading-relaxed mb-10 text-sm">
-                        A tecnologia a serviço da empatia. Plataforma de rastreabilidade para doações, garantindo que cada centavo chegue onde é mais necessário com <span class="text-gray-900 font-bold">transparência absoluta</span>.
+                    <h4 class="font-outfit text-3xl font-black text-slate-900 mb-4 tracking-tight">Bem na Prática</h4>
+                    <p class="text-slate-500 leading-relaxed mb-8">
+                        Tecnologia a serviço da empatia, garantindo transparência absoluta na rastreabilidade de doações sociais.
                     </p>
-                    <div class="flex flex-wrap gap-3 mb-12">
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Social Tech</span>
-                        <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Transparency First</span>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-purple uppercase tracking-wider border border-purple-100 shadow-sm">HTML</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-blue uppercase tracking-wider border border-blue-100 shadow-sm">JavaScript</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-pink uppercase tracking-wider border border-pink-100 shadow-sm">PHP</span>
+                        <span class="px-4 py-1.5 bg-white rounded-xl text-[10px] font-bold text-vibrant-cyan uppercase tracking-wider border border-cyan-100 shadow-sm">CSS</span>
                     </div>
-                    <a href="https://bemnapratica.com.br" target="_blank" class="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-primary-500 group-hover:translate-x-2 transition-transform">
-                        Human Impact <i class="fa-solid fa-arrow-right"></i>
-                    </a>
                 </div>
-            </div>
-        </section>
-
-        <section class="max-w-7xl mx-auto px-6 mb-40 text-center">
-            <div class="inline-block p-1 mb-10 bg-gray-200 rounded-full">
-                <div class="px-10 py-5 bg-white rounded-full">
-                    <p class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-900">Let's build something significant</p>
-                </div>
-            </div>
-            <h3 class="section-title text-4xl sm:text-6xl font-black text-gray-900 mb-12 uppercase tracking-tighter">Conecte-se com o <span class="text-primary-500">Desenvolvedor</span></h3>
-            
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="https://wa.me/5511998833971" target="_blank" class="w-full sm:w-auto px-12 py-5 bg-primary-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl shadow-primary-500/20">
-                    <i class="fa-brands fa-whatsapp mr-2"></i> WhatsApp Direct
-                </a>
-                <a href="https://github.com/GeovaneSMax" target="_blank" class="w-full sm:w-auto px-12 py-5 bg-gray-950 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl shadow-gray-950/20">
-                    <i class="fa-brands fa-github mr-2"></i> Repository
-                </a>
             </div>
         </section>
     </main>
